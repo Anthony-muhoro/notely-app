@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid()) @map("userid")
+  id                String   @id @default(uuid()) @map("userid")
   firstName         String   @map("firstname")
   lastName          String   @map("lastname")
   userName          String   @unique @map("username")
@@ -16,9 +16,11 @@ model User {
   password          String   @map("password")
   avatar            String?  @map("profileImage")
   notes             Note[]
-  verificationToken String   @map("otpCode")
+  verificationToken String?  @map("otpCode")
   isVerified        Boolean  @default(false)
   isDeleted         Boolean  @default(false)
+  resetToken        String?  @map("resetToken")
+  resetTokenExpiry  DateTime? @map("resetTokenExpiry")
   dateJoined        DateTime @default(now())
   lastUpdated       DateTime @updatedAt
 
@@ -26,18 +28,31 @@ model User {
 }
 
 model Note {
-  id       String   @id @default(uuid())
+  id           String      @id @default(uuid())
   title        String
   synopsis     String
   content      String
-  isDeleted    Boolean  @default(false)
+  images       NoteImage[]
+  isDeleted    Boolean     @default(false)
   creatorId    String
-  isPublic     Boolean  @default(false)
-  isBookmarked Boolean  @default(false)
-  isPinned     Boolean  @default(false)
-  user         User     @relation(fields: [creatorId], references: [id])
-  dateCreated  DateTime @default(now())
-  lastUpdated  DateTime @updatedAt
+  isPublic     Boolean     @default(false)
+  isBookmarked Boolean     @default(false)
+  isPinned     Boolean     @default(false)
+  user         User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  dateCreated  DateTime    @default(now())
+  lastUpdated  DateTime    @updatedAt
 
   @@map("notes")
+}
+
+model NoteImage {
+  id       String @id @default(uuid())
+  noteId   String
+  imageUrl String @map("image_url")
+  imageId  String @map("image_id") 
+  alt      String?
+  order    Int    @default(0) 
+  note     Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@map("note_images")
 }
