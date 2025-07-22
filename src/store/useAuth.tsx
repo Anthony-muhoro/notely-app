@@ -1,0 +1,48 @@
+import ApiClient from "@/lib/api";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+interface AuthState {
+  token: string | null;
+  user: any;
+  login: (email: string, userName: string, password: string) => Promise<void>;
+  logout: () => void;
+  refreshUser: () => Promise<void>;
+}
+
+export const useAuth = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      token: null,
+      user: null,
+      login: async (email, userName, password) => {
+        try {
+          const response = await ApiClient.post("auth/login", {
+            email,
+            userName,
+            password,
+          });
+          const { token, user, message } = response.data.data;
+          localStorage.setItem("token", token);
+          set({ token });
+        } catch (error) {
+          throw error;
+        }
+      },
+      logout: () => {
+        localStorage.removeItem("token");
+        set({ token: null, user: null });
+      },
+      refreshUser: async () => {
+        try {
+          const { token } = get();
+          if (token) {
+            const response = await ApiClient.get("/auth/profile");
+            set({ user: response.data.data });
+          }
+        } catch (error) {}
+      },
+    }),
+    { name: "auth-storage" }
+  )
+);

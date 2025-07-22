@@ -1,42 +1,59 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, Eye, EyeOff } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import ApiClient from "@/lib/api";
+import { useAuth } from "@/store/useAuth";
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: "",
-    password: ""
+    emailOrUsername: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
+  const isEmail = (input: string) => /\S+@\S+\.\S+/.test(input);
+  const login = useAuth((state) => state.login);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate login
-    setTimeout(() => {
-      toast({
-        title: "Welcome back!",
-        description: "You have been logged in successfully.",
-      });
-      navigate('/dashboard');
+
+    try {
+      const input = formData.emailOrUsername.trim();
+      const email = isEmail(input) ? input : "";
+      const userName = isEmail(input) ? "" : input;
+      await login(email, userName, formData.password);
+      navigate("/dashboard");
+      setTimeout(() => {
+        toast({
+          title: "Welcome back!",
+          description: "You have been logged in successfully.",
+        });
+        navigate("/dashboard");
+        setIsLoading(false);
+      }, 1000);
+    } catch (error) {
       setIsLoading(false);
-    }, 1000);
+      toast({ title: "Login failed" });
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
@@ -59,18 +76,18 @@ const Login = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="emailOrUsername">username/Email</Label>
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
+                  id="emailOrUsername"
+                  name="emailOrUsername"
+                  type="emailOrUsername"
+                  placeholder="Enter your email or username"
+                  value={formData.emailOrUsername}
                   onChange={handleChange}
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -100,16 +117,16 @@ const Login = () => {
               </div>
 
               <div className="flex justify-end">
-                <Link 
-                  to="/forgot-password" 
+                <Link
+                  to="/forgot-password"
                   className="text-sm text-orange-500 hover:text-orange-600"
                 >
                   Forgot password?
                 </Link>
               </div>
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full bg-orange-500 hover:bg-orange-600"
                 disabled={isLoading}
               >
@@ -120,7 +137,10 @@ const Login = () => {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
-                <Link to="/signup" className="text-orange-500 hover:text-orange-600">
+                <Link
+                  to="/signup"
+                  className="text-orange-500 hover:text-orange-600"
+                >
                   Sign up
                 </Link>
               </p>

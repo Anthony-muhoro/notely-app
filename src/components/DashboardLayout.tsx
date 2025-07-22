@@ -1,21 +1,30 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
-  FileText, Plus, Pin,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  FileText,
+  Plus,
+  Pin,
   Bookmark,
   Trash2,
   User,
   LogOut,
   Menu,
   Settings,
-  Globe, LockKeyhole
+  Globe,
+  LockKeyhole,
 } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/store/useAuth";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -25,6 +34,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { refreshUser, token, user } = useAuth();
+  useEffect(() => {
+    refreshUser();
+    if (!token) {
+      navigate("/login");
+    }
+  }, [token]);
 
   const navigation = [
     { name: "My Notes", href: "/dashboard", icon: FileText },
@@ -39,7 +55,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       title: "Logged out",
       description: "You have been logged out successfully.",
     });
-    navigate('/');
+    navigate("/");
   };
   const NavItems = () => (
     <nav className="space-y-1 px-3">
@@ -50,7 +66,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <Button
               variant={isActive ? "secondary" : "ghost"}
               className={`w-full justify-start h-11 ${
-                isActive ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : "hover:bg-gray-100"
+                isActive
+                  ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                  : "hover:bg-gray-100"
               }`}
               onClick={() => setSidebarOpen(false)}
             >
@@ -66,7 +84,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <div className="min-h-screen bg-gray-50">
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50 bg-white shadow-md border">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden fixed top-4 left-4 z-50 bg-white shadow-md border"
+          >
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
@@ -93,7 +115,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
         </div>
       </div>
- <div className="md:pl-72 flex flex-col flex-1">
+      <div className="md:pl-72 flex flex-col flex-1">
         <div className="sticky top-0 z-30 flex-shrink-0 flex h-16 bg-white border-b shadow-sm">
           <div className="flex-1 px-4 flex justify-between items-center">
             <div className="flex items-center">
@@ -102,27 +124,47 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600 hidden sm:block">Welcome back, John!</span>
+              <span className="text-sm text-gray-600 hidden sm:block">
+                Welcome back,{user?.firstName}
+              </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full ">
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full "
+                  >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="/placeholder.svg" alt="Profile" />
-                      <AvatarFallback className="bg-orange-100 text-orange-700">JD</AvatarFallback>
+                      <AvatarFallback className="bg-orange-100 text-orange-700">
+                        JD
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-white" align="end" forceMount>
-                  <DropdownMenuItem onClick={() => navigate('/profile')} className="hover:bg-gray-50 cursor-pointer">
+                <DropdownMenuContent
+                  className="w-56 bg-white"
+                  align="end"
+                  forceMount
+                >
+                  <DropdownMenuItem
+                    onClick={() => navigate("/profile")}
+                    className="hover:bg-gray-50 cursor-pointer"
+                  >
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={()=>navigate('/change-password')} className="hover:bg-gray-50 cursor-pointer">
+                  <DropdownMenuItem
+                    onClick={() => navigate("/change-password")}
+                    className="hover:bg-gray-50 cursor-pointer"
+                  >
                     <LockKeyhole className="mr-2 h-4 w-4" />
                     change password
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="hover:bg-gray-50 cursor-pointer">
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="hover:bg-gray-50 cursor-pointer"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     Log out
                   </DropdownMenuItem>
@@ -131,9 +173,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           </div>
         </div>
-        <main className="flex-1 p-6">
-          {children}
-        </main>
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
   );
