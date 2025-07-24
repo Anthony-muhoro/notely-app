@@ -2,7 +2,7 @@
   "name": "server",
   "version": "1.0.0",
   "description": "notely server",
-  "main": "scr/index.js",
+  "main": "dist/scr/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
     "start": "node index.js",
