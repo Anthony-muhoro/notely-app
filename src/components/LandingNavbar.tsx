@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -9,7 +8,7 @@ const LandingNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const navItems = [
-    {name:"Home",href: "#home"},
+    { name: "Home", href: "#home" },
     { name: "Features", href: "#features" },
     { name: "How it Works", href: "#how-it-works" },
     { name: "Testimonials", href: "#testimonials" },
@@ -24,13 +23,16 @@ const LandingNavbar = () => {
   };
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-7 lg:px-8 ">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
+          <div className="flex items-center" data-aos="fade-right">
             <FileText className="h-8 w-8 text-orange-500" />
             <span className="ml-2 text-xl font-bold text-gray-900">Notely</span>
           </div>
-          <div className="hidden md:flex items-center space-x-8">
+          <div
+            className="hidden md:flex items-center space-x-8"
+            data-aos="fade-up"
+          >
             {navItems.map((item) => (
               <button
                 key={item.name}
@@ -42,13 +44,16 @@ const LandingNavbar = () => {
             ))}
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => navigate('/login')}>
+          <div
+            className="hidden md:flex items-center space-x-4"
+            data-aos="fade-left"
+          >
+            <Button variant="ghost" onClick={() => navigate("/login")}>
               Sign In
             </Button>
-            <Button 
+            <Button
               className="bg-orange-500 hover:bg-orange-600"
-              onClick={() => navigate('/signup')}
+              onClick={() => navigate("/signup")}
             >
               Get Started
             </Button>
@@ -59,7 +64,10 @@ const LandingNavbar = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80 bg-white border-l border-gray-200 shadow-xl">
+            <SheetContent
+              side="right"
+              className="w-80 bg-white border-l border-gray-200 shadow-xl"
+            >
               <div className="flex flex-col space-y-6 mt-8 p-4">
                 <div className="space-y-4">
                   {navItems.map((item) => (
@@ -73,20 +81,20 @@ const LandingNavbar = () => {
                   ))}
                 </div>
                 <div className="pt-6 border-t border-gray-200 space-y-3">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full justify-start h-12 text-base"
                     onClick={() => {
-                      navigate('/login');
+                      navigate("/login");
                       setIsOpen(false);
                     }}
                   >
                     Sign In
                   </Button>
-                  <Button 
+                  <Button
                     className="w-full bg-orange-500 hover:bg-orange-600 h-12 text-base font-medium"
                     onClick={() => {
-                      navigate('/signup');
+                      navigate("/signup");
                       setIsOpen(false);
                     }}
                   >

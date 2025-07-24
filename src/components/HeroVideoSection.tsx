@@ -9,7 +9,9 @@ const HeroVideoSection = () => {
       <div className="text-center mb-12">
         <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6">
           Capture. Organize.
-          <span className="text-orange-500 block">Reflect.</span>
+          <span className="text-orange-500 block" data-aos="fade-right">
+            Reflect.
+          </span>
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
           The simplest way to take, organize, and manage your thoughts.
