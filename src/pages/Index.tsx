@@ -13,6 +13,7 @@ import HowItWorksSection from "@/components/HowItWorksSection";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { useEffect } from "react";
 import Aos from "aos";
+import "aos/dist/aos.css";
 
 const Index = () => {
   useScrollToTop();
@@ -68,17 +69,22 @@ const Index = () => {
             thoughts effortlessly with professional-grade tools.
           </p>
         </div>
-        <div className="grid md:grid-cols-3 gap-8" data-aos="flip-left">
+        <div className="grid md:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <Card
               key={index}
               className="text-center border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
             >
               <CardHeader>
-                <div className="mx-auto mb-4 p-3 bg-gray-50 rounded-full w-fit">
+                <div
+                  className="mx-auto mb-4 p-3 bg-gray-50 rounded-full w-fit"
+                  data-aos="flip-left"
+                >
                   {feature.icon}
                 </div>
-                <CardTitle className="text-xl">{feature.title}</CardTitle>
+                <CardTitle className="text-xl" data-aos="flip-up">
+                  {feature.title}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-gray-600 leading-relaxed">

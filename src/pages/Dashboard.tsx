@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/store/useStore";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import ApiClient from "@/lib/api";
 
 const Dashboard = () => {
@@ -52,11 +52,12 @@ const Dashboard = () => {
     },
   });
 
-  const handleDeleteNote = (noteId: string) => {
-    deleteNote(noteId);
-    toast({
-      title: "Note deleted",
-      description: "Note has been moved to trash.",
+  const handleDeleteNote = async (noteId: string) => {
+    await useMutation({
+      mutationKey: ["delete-note"],
+      mutationFn: async () => {
+        await ApiClient.put(`/notes/${noteId}`);
+      },
     });
   };
 
@@ -87,7 +88,6 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-3">
@@ -123,8 +123,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Recent Notes */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-gray-900">
