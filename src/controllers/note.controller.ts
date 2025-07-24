@@ -105,7 +105,7 @@ export class NoteController {
 
   static getPublicNotes = asyncHandler(
     async (req: AuthenticatedRequest, res: Response) => {
-      const result = await NoteService.getPublicNotes(req.query);
+      const result = await NoteService.getPublicNotes();
 
       res
         .status(200)

@@ -141,12 +141,6 @@ export class NoteService {
 
     return {
       notes,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
     };
   }
 
@@ -344,55 +338,19 @@ export class NoteService {
     return { message: "Image removed successfully" };
   }
 
-  static async getPublicNotes(filters: GetNotesFilters = {}) {
-    const { page = 1, limit = 10, search } = filters;
-
-    const skip = (page - 1) * limit;
-
-    const where: any = {
-      isPublic: true,
-      isDeleted: false,
-    };
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { synopsis: { contains: search, mode: "insensitive" } },
-      ];
-    }
-
-    const [notes, total] = await Promise.all([
-      prisma.note.findMany({
-        where,
-        include: {
-          images: {
-            orderBy: { order: "asc" },
-          },
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              userName: true,
-              avatar: true,
-            },
+  static async getPublicNotes() {
+    return await prisma.note.findMany({
+      where: { isPublic: true },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            avatar: true,
+            userName: true,
           },
         },
-        orderBy: { lastUpdated: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.note.count({ where }),
-    ]);
-
-    return {
-      notes,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
       },
-    };
+    });
   }
 }

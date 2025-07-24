@@ -12,12 +12,6 @@ import {
 
 const NotesRouter = Router();
 
-// Public routes
-NotesRouter.get(
-  "/public",
-  validate(getNotesSchema),
-  NoteController.getPublicNotes
-);
 NotesRouter.get(
   "/public/:id",
   validate(getNoteSchema),
@@ -39,5 +33,9 @@ NotesRouter.put("/:id", validate(updateNoteSchema), NoteController.updateNote);
 NotesRouter.delete("/:id", validate(getNoteSchema), NoteController.deleteNote);
 NotesRouter.post("/:id/images", uploadImages, NoteController.addImages);
 NotesRouter.delete("/:id/images/:imageId", NoteController.removeImage);
-
+NotesRouter.get(
+  "/public",
+  validate(getNotesSchema),
+  NoteController.getPublicNotes
+);
 export default NotesRouter;

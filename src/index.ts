@@ -16,14 +16,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use(helmet());
 
-app.use(
-  cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") || [
-      "http://localhost:8081",
-    ],
-    credentials: true,
-  })
-);
+app.use(cors({ origin: ["http://localhost:8001", "*"] }));
 
 app.use(morgan("combined"));
 
