@@ -21,7 +21,6 @@ const WordLikeEditor = ({ value, onChange }: WordLikeEditorProps) => {
 
   const handleFormatText = useCallback((command: string, value?: string) => {
     document.execCommand(command, false, value);
-    // Let the browser handle cursor positioning naturally
     setTimeout(() => {
       if (editorRef.current) {
         onChange(editorRef.current.innerHTML);
@@ -38,93 +37,64 @@ const WordLikeEditor = ({ value, onChange }: WordLikeEditorProps) => {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const imageId = `img-${Date.now()}`;
-        const imageContainer = document.createElement('div');
-        imageContainer.className = 'image-container my-4';
-        imageContainer.setAttribute('data-image-id', imageId);
-        imageContainer.style.cssText = `
-          position: relative;
-          display: block;
-          margin: 16px auto;
-          max-width: 100%;
-          text-align: center;
-          border: 2px dashed #e5e7eb;
-          border-radius: 8px;
-          padding: 12px;
-          background: #f9fafb;
-        `;
-        
         const img = document.createElement('img');
         img.src = e.target?.result as string;
         img.style.cssText = `
           max-width: 100%;
           height: auto;
-          border-radius: 6px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          border-radius: 8px;
           display: block;
-          margin: 0 auto 8px auto;
-        `;
-        
-        const caption = document.createElement('div');
-        caption.contentEditable = 'true';
-        caption.style.cssText = `
-          font-size: 14px;
-          color: #6b7280;
-          font-style: italic;
-          text-align: center;
-          outline: none;
-          padding: 4px;
-          border: 1px solid transparent;
-          border-radius: 4px;
-        `;
-        caption.innerText = 'Add a caption...';
-        
-        // Remove button
-        const removeBtn = document.createElement('button');
-        removeBtn.innerHTML = '×';
-        removeBtn.style.cssText = `
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          background: rgba(239, 68, 68, 0.9);
-          color: white;
-          border: none;
-          border-radius: 50%;
-          width: 24px;
-          height: 24px;
+          margin: 8px 0;
           cursor: pointer;
-          font-size: 16px;
-          font-weight: bold;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          resize: both;
+          overflow: hidden;
+          border: 2px solid transparent;
         `;
         
-        removeBtn.onclick = (e) => {
+        img.draggable = true;
+        img.contentEditable = 'false';
+        
+        // Add selection styling
+        img.addEventListener('click', (e) => {
           e.preventDefault();
-          imageContainer.remove();
-          if (editorRef.current) {
-            onChange(editorRef.current.innerHTML);
+          // Remove previous selections
+          const prevSelected = editorRef.current?.querySelectorAll('img[data-selected="true"]');
+          prevSelected?.forEach(prevImg => {
+            prevImg.style.border = '2px solid transparent';
+            prevImg.removeAttribute('data-selected');
+          });
+          
+          // Select current image
+          img.style.border = '2px solid #3b82f6';
+          img.setAttribute('data-selected', 'true');
+          
+          const selection = window.getSelection();
+          if (selection) {
+            selection.removeAllRanges();
+            const range = document.createRange();
+            range.selectNode(img);
+            selection.addRange(range);
           }
-        };
-        
-        imageContainer.appendChild(img);
-        imageContainer.appendChild(caption);
-        imageContainer.appendChild(removeBtn);
-        
+        });
+
+        // Handle resize
+        img.addEventListener('mousedown', (e) => {
+          if (e.target === img) {
+            e.preventDefault();
+          }
+        });
+
         // Insert at cursor position or at the end
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
           const range = selection.getRangeAt(0);
-          range.insertNode(imageContainer);
-          
-          // Move cursor after the image
-          range.setStartAfter(imageContainer);
-          range.setEndAfter(imageContainer);
+          range.insertNode(img);
+          range.setStartAfter(img);
+          range.setEndAfter(img);
           selection.removeAllRanges();
           selection.addRange(range);
         } else if (editorRef.current) {
-          editorRef.current.appendChild(imageContainer);
+          editorRef.current.appendChild(img);
         }
         
         if (editorRef.current) {
@@ -136,20 +106,35 @@ const WordLikeEditor = ({ value, onChange }: WordLikeEditorProps) => {
     event.target.value = '';
   }, [onChange]);
 
+  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
+    if (event.key === 'Backspace' || event.key === 'Delete') {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const selectedImg = range.commonAncestorContainer.parentElement?.querySelector('img[data-selected="true"]');
+        
+        if (selectedImg) {
+          selectedImg.remove();
+          onChange(editorRef.current?.innerHTML || '');
+          event.preventDefault();
+        }
+      }
+    }
+  }, [onChange]);
+
   const handleContentChange = useCallback(() => {
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
     }
   }, [onChange]);
 
-  const handleDownloadPDF = useCallback(() => {
-    console.log("Downloading as PDF...");
-    // PDF download functionality would be implemented here
-  }, []);
-
-  const handleShare = useCallback(() => {
-    console.log("Sharing note...");
-    // Share functionality would be implemented here
+  const handleClick = useCallback(() => {
+    // Deselect images when clicking elsewhere
+    const selectedImgs = editorRef.current?.querySelectorAll('img[data-selected="true"]');
+    selectedImgs?.forEach(img => {
+      img.style.border = '2px solid transparent';
+      img.removeAttribute('data-selected');
+    });
   }, []);
 
   return (
@@ -157,8 +142,6 @@ const WordLikeEditor = ({ value, onChange }: WordLikeEditorProps) => {
       <RichTextToolbar
         onFormatText={handleFormatText}
         onImageUpload={handleImageUpload}
-        onDownloadPDF={handleDownloadPDF}
-        onShare={handleShare}
       />
       
       <div className="min-h-[600px] bg-white">
@@ -166,6 +149,8 @@ const WordLikeEditor = ({ value, onChange }: WordLikeEditorProps) => {
           ref={editorRef}
           contentEditable
           onInput={handleContentChange}
+          onKeyDown={handleKeyDown}
+          onClick={handleClick}
           className="min-h-[600px] p-8 focus:outline-none prose prose-lg max-w-none"
           style={{
             lineHeight: '1.6',

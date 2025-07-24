@@ -12,8 +12,6 @@ import {
   List,
   ListOrdered,
   Image,
-  Download,
-  Share2,
   Palette,
   Type
 } from "lucide-react";
@@ -21,11 +19,9 @@ import {
 interface RichTextToolbarProps {
   onFormatText: (command: string, value?: string) => void;
   onImageUpload: () => void;
-  onDownloadPDF: () => void;
-  onShare: () => void;
 }
 
-const RichTextToolbar = ({ onFormatText, onImageUpload, onDownloadPDF, onShare }: RichTextToolbarProps) => {
+const RichTextToolbar = ({ onFormatText, onImageUpload }: RichTextToolbarProps) => {
   const textColors = [
     { name: "Black", value: "#000000" },
     { name: "Red", value: "#ef4444" },
@@ -186,7 +182,7 @@ const RichTextToolbar = ({ onFormatText, onImageUpload, onDownloadPDF, onShare }
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
-        {/* Media & Actions */}
+        {/* Media */}
         <Button
           size="sm"
           variant="ghost"
@@ -195,17 +191,6 @@ const RichTextToolbar = ({ onFormatText, onImageUpload, onDownloadPDF, onShare }
         >
           <Image className="h-4 w-4" />
         </Button>
-
-        <div className="ml-auto flex gap-2">
-          <Button size="sm" variant="ghost" onClick={onDownloadPDF}>
-            <Download className="h-4 w-4 mr-1" />
-            PDF
-          </Button>
-          <Button size="sm" variant="ghost" onClick={onShare}>
-            <Share2 className="h-4 w-4 mr-1" />
-            Share
-          </Button>
-        </div>
       </div>
     </div>
   );
