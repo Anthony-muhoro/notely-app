@@ -4,9 +4,9 @@
   "description": "notely server",
   "main": "dist/scr/index.js",
   "scripts": {
-    "dev": "nodemon src/index.ts",
-    "start": "node index.js",
-    "build": "tsc"
+    "dev": "nodemon dist/src/index.ts",
+    "start": "node dist/index.js",
+    "build": "npx tsc"
   },
   "keywords": [],
   "author": "",
