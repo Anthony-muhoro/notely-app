@@ -12,30 +12,27 @@ import {
 
 const NotesRouter = Router();
 
+NotesRouter.use(protect);
+
+// Group public routes
 NotesRouter.get(
   "/public/:id",
   validate(getNoteSchema),
   NoteController.getNoteById
 );
+NotesRouter.get("/public", NoteController.getPublicNotes);
 
-// Protected routes
-NotesRouter.use(protect);
-
+// Group user-specific routes
+NotesRouter.get("/", validate(getNotesSchema), NoteController.getUserNotes);
+NotesRouter.get("/:id", validate(getNoteSchema), NoteController.getNoteById);
 NotesRouter.post(
   "/",
   uploadImages,
   validate(createNoteSchema),
   NoteController.createNote
 );
-NotesRouter.get("/", validate(getNotesSchema), NoteController.getUserNotes);
-NotesRouter.get("/:id", validate(getNoteSchema), NoteController.getNoteById);
 NotesRouter.put("/:id", validate(updateNoteSchema), NoteController.updateNote);
 NotesRouter.delete("/:id", validate(getNoteSchema), NoteController.deleteNote);
 NotesRouter.post("/:id/images", uploadImages, NoteController.addImages);
 NotesRouter.delete("/:id/images/:imageId", NoteController.removeImage);
-NotesRouter.get(
-  "/public",
-  validate(getNotesSchema),
-  NoteController.getPublicNotes
-);
 export default NotesRouter;

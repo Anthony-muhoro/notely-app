@@ -64,13 +64,16 @@ export class AuthService {
     return user;
   }
 
-  static async login(email: string, password: string) {
-    const user = await prisma.user.findUnique({
-      where: { email, isDeleted: false },
+  static async login(email: string, userName: string, password: string) {
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [{ email }, { userName }],
+        isDeleted: false,
+      },
     });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new ApiError(401, "Invalid email or password");
+      throw new ApiError(401, "Invalid credentials");
     }
 
     if (!user.isVerified) {

@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use(helmet());
 
-app.use(cors({ origin: ["http://localhost:8001", "*"] }));
+app.use(cors({ origin: "*" }));
 
 app.use(morgan("combined"));
 

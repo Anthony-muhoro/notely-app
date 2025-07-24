@@ -338,9 +338,14 @@ export class NoteService {
     return { message: "Image removed successfully" };
   }
 
-  static async getPublicNotes() {
+  static async getPublicNotes(userId: string) {
     return await prisma.note.findMany({
-      where: { isPublic: true },
+      where: {
+        isPublic: true,
+        creatorId: {
+          not: userId,
+        },
+      },
       include: {
         user: {
           select: {
