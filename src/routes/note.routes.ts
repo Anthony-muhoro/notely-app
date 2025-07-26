@@ -24,7 +24,9 @@ NotesRouter.get("/public", NoteController.getPublicNotes);
 
 // Group user-specific routes
 NotesRouter.get("/", validate(getNotesSchema), NoteController.getUserNotes);
-NotesRouter.get("/:id", validate(getNoteSchema), NoteController.getNoteById);
+NotesRouter.get("/deleted-notes", protect, NoteController.getDeletedNotes);
+NotesRouter.get("/:id", NoteController.getNoteById);
+NotesRouter.put("/:id/restore", protect, NoteController.restoreNote);
 NotesRouter.post(
   "/",
   uploadImages,

@@ -246,6 +246,51 @@ export class NoteService {
 
     return { message: "Note deleted successfully" };
   }
+  static async getUserDeletedNotes(userId: string) {
+    const deletedNotes = await prisma.note.findMany({
+      where: {
+        creatorId: userId,
+        isDeleted: true,
+      },
+      include: {
+        images: {
+          orderBy: { order: "asc" },
+        },
+      },
+      orderBy: {
+        lastUpdated: "desc",
+      },
+    });
+
+    return {
+      success: true,
+      message: deletedNotes.length
+        ? "Deleted notes retrieved successfully"
+        : "No deleted notes found",
+      notes: deletedNotes,
+    };
+  }
+
+  static async restoreNote(noteId: string, userId: string) {
+    const note = await prisma.note.findFirst({
+      where: { id: noteId, creatorId: userId, isDeleted: true },
+    });
+
+    if (!note) {
+      return { success: false, message: "Note not found or already restored" };
+    }
+
+    const restoredNote = await prisma.note.update({
+      where: { id: noteId },
+      data: { isDeleted: false },
+    });
+
+    return {
+      success: true,
+      message: "Note restored successfully",
+      data: restoredNote,
+    };
+  }
 
   static async addImagesToNote(
     noteId: string,

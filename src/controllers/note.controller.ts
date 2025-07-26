@@ -1,8 +1,8 @@
-import { Response, NextFunction } from "express";
+import { Response } from "express";
 import { NoteService } from "../services/note.service";
 import { ApiResponse } from "../utils/apiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
-import { AuthenticatedRequest, MulterRequest } from "../types";
+import { AuthenticatedRequest } from "../types";
 
 type NoteRequest = AuthenticatedRequest & {
   files?:
@@ -63,6 +63,32 @@ export class NoteController {
       res
         .status(200)
         .json(new ApiResponse(200, result, "Note deleted successfully"));
+    }
+  );
+  static getDeletedNotes = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const result = await NoteService.getUserDeletedNotes(req.user!.id);
+
+      return res.status(200).json({
+        message: result.message,
+        notes: result.notes,
+      });
+    }
+  );
+
+  static restoreNote = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const { id } = req.params;
+      const result = await NoteService.restoreNote(id, req.user!.id);
+
+      if (!result.success) {
+        return res.status(404).json({ message: result.message });
+      }
+
+      return res.status(200).json({
+        message: result.message,
+        note: result.data,
+      });
     }
   );
 
