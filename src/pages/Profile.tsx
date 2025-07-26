@@ -10,44 +10,43 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Save, Upload, Camera, Loader2 } from "lucide-react";
+import { Save, Camera, Loader2, Pencil } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout.tsx";
 import { useAuth } from "@/store/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import ApiClient from "@/lib/api";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [profileData, setProfileData] = useState({
-    firstName: user?.firstName || "",
-    lastName: user?.lastName || "",
-    username: user?.userName || "",
-    email: user?.email || "",
+  const [updateData, setupdateData] = useState({
+    firstName: user?.firstName,
+    lastName: user?.lastName,
+    userName: user?.userName,
+    email: user?.email,
   });
 
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
+      await ApiClient.put("/users/profile", updateData);
+      refreshUser();
       toast({
         title: "Profile updated",
         description: "Your profile has been successfully updated.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Update failed",
-        description:
-          "There was an error updating your profile. Please try again.",
+        description: "There was an error updating your profile.",
         variant: "destructive",
       });
     } finally {
@@ -56,45 +55,46 @@ const Profile = () => {
   };
 
   const handleProfileChange = (field: string, value: string) => {
-    setProfileData((prev) => ({
+    setupdateData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  const handleImageUpload = () => {
+  const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setIsUploadingImage(true);
+      setSelectedFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setProfileImage(previewUrl);
+    }
+  };
 
-      try {
-        // Create a preview URL
-        const imageUrl = URL.createObjectURL(file);
-        setProfileImage(imageUrl);
-
-        // Simulate upload delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        toast({
-          title: "Image uploaded",
-          description: "Your profile picture has been updated.",
-        });
-      } catch (error) {
-        toast({
-          title: "Upload failed",
-          description:
-            "There was an error uploading your image. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsUploadingImage(false);
-      }
+  const handleImageUpload = async () => {
+    if (!selectedFile) return;
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("avatar", selectedFile);
+      await ApiClient.put("/users/profile/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setSelectedFile(null);
+      toast({ title: "Profile picture updated." });
+      refreshUser();
+    } catch (err: any) {
+      console.log(err?.response.data);
+      toast({
+        title: "Upload failed",
+        description: "Could not upload image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -115,18 +115,18 @@ const Profile = () => {
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle>Profile Picture</CardTitle>
-                <CardDescription>Update your profile photo</CardDescription>
+                <CardDescription>Upload a new profile photo</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
-                <div className="relative">
+                <div
+                  className="relative group cursor-pointer"
+                  onClick={triggerFileInput}
+                >
                   <Avatar className="h-32 w-32 border-4 border-orange-100">
-                    <AvatarImage
-                      src={profileImage || "/placeholder.svg"}
-                      alt="Profile"
-                    />
+                    <AvatarImage src={profileImage || "/placeholder.svg"} />
                     <AvatarFallback className="text-2xl bg-orange-100 text-orange-700">
-                      {profileData.firstName?.[0] || "U"}
-                      {profileData.lastName?.[0] || ""}
+                      {(user?.firstName?.[0] ?? "U").toUpperCase()}
+                      {(user?.lastName?.[0] ?? "").toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   {isUploadingImage && (
@@ -134,12 +134,24 @@ const Profile = () => {
                       <Loader2 className="h-6 w-6 text-white animate-spin" />
                     </div>
                   )}
+                  <div className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow group-hover:opacity-100 opacity-0 transition-opacity">
+                    <Pencil className="h-5 w-5 text-gray-600" />
+                  </div>
                 </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
                 <Button
+                  onClick={handleImageUpload}
                   variant="outline"
                   className="w-full hover:bg-orange-50 hover:border-orange-300"
-                  onClick={handleImageUpload}
-                  disabled={isUploadingImage}
+                  disabled={!selectedFile || isUploadingImage}
                 >
                   {isUploadingImage ? (
                     <>
@@ -153,13 +165,6 @@ const Profile = () => {
                     </>
                   )}
                 </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
               </CardContent>
             </Card>
           </div>
@@ -171,41 +176,38 @@ const Profile = () => {
                 <CardDescription>Update your personal details</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleProfileSubmit} className="space-y-4">
+                <form className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name</Label>
                       <Input
                         id="firstName"
-                        value={profileData.firstName}
+                        value={updateData.firstName}
                         onChange={(e) =>
                           handleProfileChange("firstName", e.target.value)
                         }
-                        className="focus:ring-orange-500 focus:border-orange-500"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Last Name</Label>
                       <Input
                         id="lastName"
-                        value={profileData.lastName}
+                        value={updateData.lastName}
                         onChange={(e) =>
                           handleProfileChange("lastName", e.target.value)
                         }
-                        className="focus:ring-orange-500 focus:border-orange-500"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="userName">Username</Label>
                     <Input
-                      id="username"
-                      value={profileData.username}
+                      id="userName"
+                      value={updateData.userName}
                       onChange={(e) =>
-                        handleProfileChange("username", e.target.value)
+                        handleProfileChange("userName", e.target.value)
                       }
-                      className="focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
 
@@ -214,14 +216,14 @@ const Profile = () => {
                     <Input
                       id="email"
                       type="email"
-                      value={profileData.email}
+                      value={updateData.email}
                       disabled
                       className="bg-gray-50 cursor-not-allowed"
                     />
                   </div>
 
                   <Button
-                    type="submit"
+                    onClick={handleProfileSubmit}
                     className="bg-orange-500 hover:bg-orange-600 text-white"
                     disabled={isSaving}
                   >
