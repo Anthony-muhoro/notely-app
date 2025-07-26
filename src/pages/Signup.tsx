@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Eye, EyeOff } from "lucide-react";
+import { FileText, Eye, EyeOff, Loader } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import ApiClient from "@/lib/api";
 import { useNavigate } from "react-router-dom";
@@ -34,11 +34,22 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       const { confirmPassword, ...rest } = formData;
-      await ApiClient.post("/auth/register", { ...rest });
+      const response = await ApiClient.post("/auth/register", { ...rest });
       toast.success("Account created successfuly . check your email to verify");
+      console.log(response.data);
       navigate("/verify-email");
     } catch (err: any) {
+      console.log(err?.response.data.message);
+      toast(
+        <div className="max-w-sm w-full flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 text-red-800 rounded-md shadow">
+          <span className="text-xl">⚠️</span>
+          <div className="text-sm font-medium">
+            {err?.response?.data?.message || "Something went wrong"}
+          </div>
+        </div>
+      );
       setError(err?.response?.data?.message || "Signup failed");
     } finally {
       setLoading(false);
@@ -95,7 +106,6 @@ const Signup = () => {
                   />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="userName">UserName</Label>
                 <Input
@@ -108,7 +118,6 @@ const Signup = () => {
                   className="focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -122,7 +131,6 @@ const Signup = () => {
                   className="focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -151,7 +159,6 @@ const Signup = () => {
                   </Button>
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <div className="relative">
@@ -183,9 +190,17 @@ const Signup = () => {
 
               <Button
                 onClick={handleSubmit}
-                className="w-full bg-orange-500 hover:bg-orange-600 transition-colors"
+                disabled={loading}
+                className="w-full bg-orange-500 hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
               >
-                Create Account
+                {loading ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create Account"
+                )}
               </Button>
             </div>
 

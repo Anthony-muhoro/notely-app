@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware";
 interface AuthState {
   token: string | null;
   user: any;
-  login: (email: string, userName: string, password: string) => Promise<void>;
+  login: (email: string, userName: string, password: string) => Promise<any>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -22,11 +22,13 @@ export const useAuth = create<AuthState>()(
             userName,
             password,
           });
-          const { token, user, message } = response.data.data;
+          const { token } = response.data.data;
+
           localStorage.setItem("token", token);
           set({ token });
-        } catch (error) {
-          throw error;
+          return response.data.message;
+        } catch (err: any) {
+          throw err;
         }
       },
       logout: () => {

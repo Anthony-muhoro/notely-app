@@ -28,7 +28,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
+      <Sonner position="top-center" />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -37,7 +37,6 @@ const App = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
-
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/new" element={<NewNote />} />
           <Route path="/edit/:id" element={<EditNote />} />
