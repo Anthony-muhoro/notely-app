@@ -16,52 +16,61 @@ export class AuthService {
     email: string;
     password: string;
   }) {
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: userData.email }, { userName: userData.userName }],
-      },
-    });
+    try {
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          OR: [{ email: userData.email }, { userName: userData.userName }],
+        },
+      });
 
-    if (existingUser) {
-      throw new ApiError(
-        409,
-        "User with this email or username already exists"
-      );
-    }
+      if (existingUser) {
+        return {
+          success: false,
+          message: "User with this email or username already exist",
+        };
+      }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(userData.password, 12);
+      const hashedPassword = await bcrypt.hash(userData.password, 12);
 
-    // Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString("hex");
+      // Generate verification token
+      const verificationToken = crypto.randomBytes(32).toString("hex");
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        ...userData,
-        password: hashedPassword,
+      // Create user
+      const user = await prisma.user.create({
+        data: {
+          ...userData,
+          password: hashedPassword,
+          verificationToken,
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          userName: true,
+          email: true,
+          isVerified: true,
+          dateJoined: true,
+        },
+      });
+
+      // Send verification email
+      await sendVerificationEmail(
+        userData.email,
         verificationToken,
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        userName: true,
-        email: true,
-        isVerified: true,
-        dateJoined: true,
-      },
-    });
+        userData.firstName
+      );
 
-    // Send verification email
-    await sendVerificationEmail(
-      userData.email,
-      verificationToken,
-      userData.firstName
-    );
-
-    return user;
+      return {
+        success: true,
+        data: user,
+      };
+    } catch (error) {
+      console.error("Registration error:", error);
+      return {
+        success: false,
+        message: "An unexpected error occurred. Please try again later.",
+      };
+    }
   }
 
   static async login(email: string, userName: string, password: string) {
@@ -72,12 +81,21 @@ export class AuthService {
       },
     });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new ApiError(401, "Invalid credentials");
+    const passwordMatches =
+      user && (await bcrypt.compare(password, user.password));
+
+    if (!user || !passwordMatches) {
+      return {
+        success: false,
+        message: "Invalid login details",
+      };
     }
 
     if (!user.isVerified) {
-      throw new ApiError(401, "Please verify your email address first");
+      return {
+        success: false,
+        message: "Please verify your email address first",
+      };
     }
 
     const token = jwt.sign(
@@ -97,7 +115,13 @@ export class AuthService {
       dateJoined: user.dateJoined,
     };
 
-    return { user: userResponse, token };
+    return {
+      success: true,
+      data: {
+        user: userResponse,
+        token,
+      },
+    };
   }
 
   static async verifyEmail(token: string) {

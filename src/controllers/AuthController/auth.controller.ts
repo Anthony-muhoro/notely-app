@@ -2,17 +2,28 @@ import { Request, Response, NextFunction } from "express";
 import { AuthService } from "../../services/auth.service";
 import { ApiResponse } from "../../utils/apiResponse";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { registerSchema } from "../../validations/auth.validations";
 
 export class AuthController {
   static register = asyncHandler(async (req: Request, res: Response) => {
-    const user = await AuthService.register(req.body);
+    const parsed = registerSchema.safeParse({ body: req.body });
 
-    res
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message || "Invalid input";
+      return res.status(400).json(new ApiResponse(400, null, firstError));
+    }
+    const result = await AuthService.register(parsed.data.body);
+
+    if (!result.success) {
+      return res.status(400).json(new ApiResponse(400, null, result.message));
+    }
+
+    return res
       .status(201)
       .json(
         new ApiResponse(
           201,
-          user,
+          result.data,
           "User registered successfully. Please check your email for verification."
         )
       );
@@ -22,7 +33,11 @@ export class AuthController {
     const { email, userName, password } = req.body;
     const result = await AuthService.login(email, userName, password);
 
-    res.status(200).json(new ApiResponse(200, result, "Login successful"));
+    if (!result.success) {
+      return res.status(401).json(new ApiResponse(401, null, result.message));
+    }
+
+    res.status(200).json(new ApiResponse(200, result.data, "Login successful"));
   });
 
   static verifyEmail = asyncHandler(async (req: Request, res: Response) => {

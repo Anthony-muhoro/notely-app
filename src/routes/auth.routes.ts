@@ -12,7 +12,7 @@ import {
 
 const AuthRouter = Router();
 
-AuthRouter.post("/register", validate(registerSchema), AuthController.register);
+AuthRouter.post("/register", AuthController.register);
 AuthRouter.post("/login", AuthController.login);
 AuthRouter.post(
   "/verify-email",
