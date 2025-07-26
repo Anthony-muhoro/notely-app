@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +19,7 @@ const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -28,7 +27,7 @@ const Profile = () => {
     email: user?.email || "",
   });
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(user?.avatar);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
@@ -38,8 +37,8 @@ const Profile = () => {
 
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       toast({
         title: "Profile updated",
         description: "Your profile has been successfully updated.",
@@ -47,7 +46,8 @@ const Profile = () => {
     } catch (error) {
       toast({
         title: "Update failed",
-        description: "There was an error updating your profile. Please try again.",
+        description:
+          "There was an error updating your profile. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -66,19 +66,21 @@ const Profile = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
       setIsUploadingImage(true);
-      
+
       try {
         // Create a preview URL
         const imageUrl = URL.createObjectURL(file);
         setProfileImage(imageUrl);
-        
+
         // Simulate upload delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         toast({
           title: "Image uploaded",
           description: "Your profile picture has been updated.",
@@ -86,7 +88,8 @@ const Profile = () => {
       } catch (error) {
         toast({
           title: "Upload failed",
-          description: "There was an error uploading your image. Please try again.",
+          description:
+            "There was an error uploading your image. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -117,7 +120,10 @@ const Profile = () => {
               <CardContent className="flex flex-col items-center space-y-4">
                 <div className="relative">
                   <Avatar className="h-32 w-32 border-4 border-orange-100">
-                    <AvatarImage src={profileImage || "/placeholder.svg"} alt="Profile" />
+                    <AvatarImage
+                      src={profileImage || "/placeholder.svg"}
+                      alt="Profile"
+                    />
                     <AvatarFallback className="text-2xl bg-orange-100 text-orange-700">
                       {profileData.firstName?.[0] || "U"}
                       {profileData.lastName?.[0] || ""}
@@ -129,8 +135,8 @@ const Profile = () => {
                     </div>
                   )}
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full hover:bg-orange-50 hover:border-orange-300"
                   onClick={handleImageUpload}
                   disabled={isUploadingImage}

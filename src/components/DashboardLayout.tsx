@@ -34,7 +34,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { refreshUser, token, user } = useAuth();
+  const { refreshUser, token, user, logout } = useAuth();
   useEffect(() => {
     refreshUser();
     if (!token) {
@@ -50,13 +50,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: "Trash", href: "/trash", icon: Trash2 },
     { name: "Public Notes", href: "/public", icon: Globe },
   ];
-  const handleLogout = () => {
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully.",
-    });
+  const handleLogout = async () => {
+    logout();
+    toast(<p>You have successfuly logged out </p>);
     navigate("/");
   };
+  const initials = (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "");
+
   const NavItems = () => (
     <nav className="space-y-1 px-3">
       {navigation.map((item) => {
@@ -134,9 +134,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                     className="relative h-8 w-8 rounded-full "
                   >
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="/placeholder.svg" alt="Profile" />
-                      <AvatarFallback className="bg-orange-100 text-orange-700">
-                        JD
+                      <AvatarImage src={user?.avatar} alt="Profile" />
+                      <AvatarFallback className="bg-orange-50 text-blue-700">
+                        {initials}
                       </AvatarFallback>
                     </Avatar>
                   </Button>

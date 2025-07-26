@@ -1,5 +1,4 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -62,15 +61,12 @@
 * {
   border-color: hsl(var(--border));
 }
-::selection{
-  color: orange;
-}
+
 body {
   color: hsl(var(--foreground));
   background: hsl(var(--background));
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
-
 
 @layer utilities {
   .text-balance {
@@ -109,11 +105,9 @@ body {
   border-radius: 3px;
 }
 
-
 html {
   scroll-behavior: smooth;
 }
-
 
 @keyframes fadeInUp {
   from {
