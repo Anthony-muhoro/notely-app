@@ -150,7 +150,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new ApiError(404, "User not found");
+      return { success: false, message: "user not found" };
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
@@ -169,7 +169,7 @@ export class AuthService {
     return { message: "Password reset email sent" };
   }
 
-  static async resetPassword(token: string, newPassword: string) {
+  static async resetPassword(token: string, password: string) {
     const user = await prisma.user.findFirst({
       where: {
         resetToken: token,
@@ -179,10 +179,10 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new ApiError(400, "Invalid or expired reset token");
+      return { success: false, message: "Invalid or expired reset token" };
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     await prisma.user.update({
       where: { id: user.id },
@@ -193,6 +193,6 @@ export class AuthService {
       },
     });
 
-    return { message: "Password reset successfully" };
+    return { success: true };
   }
 }

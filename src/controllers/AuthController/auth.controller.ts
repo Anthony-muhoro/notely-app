@@ -2,7 +2,10 @@ import { Request, Response, NextFunction } from "express";
 import { AuthService } from "../../services/auth.service";
 import { ApiResponse } from "../../utils/apiResponse";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { registerSchema } from "../../validations/auth.validations";
+import {
+  registerSchema,
+  resetPasswordSchema,
+} from "../../validations/auth.validations";
 
 export class AuthController {
   static register = asyncHandler(async (req: Request, res: Response) => {
@@ -52,6 +55,9 @@ export class AuthController {
   static forgotPassword = asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body;
     const result = await AuthService.forgotPassword(email);
+    if (!result.success) {
+      return res.status(401).json(new ApiResponse(401, null, result.message));
+    }
 
     res
       .status(200)
@@ -59,12 +65,31 @@ export class AuthController {
   });
 
   static resetPassword = asyncHandler(async (req: Request, res: Response) => {
-    const { token, password } = req.body;
+    const parsed = resetPasswordSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            null,
+            parsed.error.issues[0]?.message || "Invalid input"
+          )
+        );
+    }
+
+    const { token, password } = parsed.data;
+
     const result = await AuthService.resetPassword(token, password);
 
-    res
+    if (!result.success) {
+      return res.status(400).json(new ApiResponse(400, null, result.message));
+    }
+
+    return res
       .status(200)
-      .json(new ApiResponse(200, result, "Password reset successful"));
+      .json(new ApiResponse(200, null, "Password reset successfully"));
   });
 
   static getProfile = asyncHandler(async (req: any, res: Response) => {

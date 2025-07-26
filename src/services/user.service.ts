@@ -1,6 +1,8 @@
+import imagekit from "../config/imagekit";
 import prisma from "../config/prisma";
 import { ApiError } from "../utils/apiError";
 import bcrypt from "bcryptjs";
+
 export class userService {
   static async updateProfile(
     userId: string,
@@ -75,5 +77,47 @@ export class userService {
     });
 
     return { message: "Password updated successfully" };
+  }
+
+  static async changeProfileImage(userId: string, image: Express.Multer.File) {
+    if (!image) {
+      return { message: "No image file provided" };
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return { message: "User not found" };
+    }
+
+    if (user.avatar) {
+      try {
+        await imagekit.deleteFile(user.avatar);
+      } catch (error) {
+        console.error("Failed to delete old avatar from ImageKit", error);
+      }
+    }
+
+    const result = await imagekit.upload({
+      file: image.buffer,
+      fileName: `avatar_${userId}_${Date.now()}`,
+      folder: "/avatars",
+    });
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        avatar: result.url,
+      },
+      select: {
+        id: true,
+        avatar: true,
+        firstName: true,
+        lastName: true,
+        userName: true,
+        email: true,
+      },
+    });
+
+    return updatedUser;
   }
 }

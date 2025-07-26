@@ -20,7 +20,14 @@ export const uploadImages = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB per file
-    files: 10, // Maximum 10 files
+    fileSize: 5 * 1024 * 1024,
+    files: 10,
   },
 }).array("images", 10);
+export const uploadAvatar = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+}).single("avatar");

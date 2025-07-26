@@ -6,6 +6,7 @@ import prisma from "./config/prisma";
 import dotenv from "dotenv";
 import AuthRouter from "./routes/auth.routes";
 import NotesRouter from "./routes/note.routes";
+import UserRouter from "./routes/users.routes";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.get("/", (_req: Request, res: Response) => {
 
 app.use("/api/auth", AuthRouter);
 app.use("/api/notes", NotesRouter);
+app.use("/api/users", UserRouter);
 
 const PORT = process.env.PORT || 5600;
 

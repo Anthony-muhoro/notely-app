@@ -24,11 +24,7 @@ AuthRouter.post(
   validate(forgotPasswordSchema),
   AuthController.forgotPassword
 );
-AuthRouter.post(
-  "/reset-password",
-  validate(resetPasswordSchema),
-  AuthController.resetPassword
-);
+AuthRouter.post("/reset-password", AuthController.resetPassword);
 AuthRouter.get("/profile", protect, AuthController.getProfile);
 
 export default AuthRouter;
