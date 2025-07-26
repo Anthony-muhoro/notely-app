@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -122,29 +121,8 @@ const NoteDetails = () => {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/dashboard")}
-            className="mr-4 hover:bg-gray-100"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+        <div className="flex items-center justify-end mb-8">
           <div className="flex items-center space-x-2">
-            <ShareButton 
-              noteTitle={note.title}
-              noteContent={note.content}
-              noteId={note.id}
-              dateCreated={note.dateCreated}
-              lastUpdated={note.lastUpdated}
-              synopsis={note.synopsis}
-            />
-            <Button variant="outline" onClick={() => navigate(`/edit/${id}`)}>
-              <Edit3 className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -172,7 +150,9 @@ const NoteDetails = () => {
                   </AlertDialogTrigger>
                   <AlertDialogContent className="bg-white border border-gray-200 shadow-lg">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-gray-900">Delete note?</AlertDialogTitle>
+                      <AlertDialogTitle className="text-gray-900">
+                        Delete note?
+                      </AlertDialogTitle>
                       <AlertDialogDescription className="text-gray-600">
                         This will move the note to trash. You can restore it
                         later if needed.
@@ -202,9 +182,6 @@ const NoteDetails = () => {
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               {note.title}
             </h1>
-            {note.synopsis && (
-              <p className="text-lg text-gray-600 mb-4">{note.synopsis}</p>
-            )}
             <div className="flex items-center space-x-2 mb-4">
               {note.isPublic && (
                 <Badge
@@ -234,9 +211,21 @@ const NoteDetails = () => {
               )}
             </div>
             <div className="text-sm text-gray-500 border-b pb-4">
-              <p>Created: {new Date(note.dateCreated).toLocaleDateString()}</p>
               <p>
-                Last updated: {new Date(note.lastUpdated).toLocaleDateString()}
+                Date Published:{" "}
+                {new Date(note.dateCreated).toLocaleDateString("en-US", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+              <p>
+                Last updated:{" "}
+                {new Date(note.lastUpdated).toLocaleDateString("en-US", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
               </p>
             </div>
           </div>

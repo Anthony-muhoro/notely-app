@@ -1,14 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Plus,
-  BookOpen,
-  Search,
-  FileText,
-  Globe,
-  Lock,
-} from "lucide-react";
+import { Plus, BookOpen, Search, FileText, Globe, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -36,8 +28,7 @@ const Dashboard = () => {
 
   const handleDeleteNote = async (noteId: string) => {
     try {
-      await ApiClient.put(`/notes/${noteId}`);
-      // Refresh notes after deletion
+      await ApiClient.delete(`/notes/${noteId}`);
       window.location.reload();
     } catch (error) {
       console.error("Error deleting note:", error);
