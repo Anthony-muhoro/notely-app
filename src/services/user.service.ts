@@ -65,7 +65,7 @@ export class userService {
       user.password
     );
     if (!isCurrentPasswordValid) {
-      throw new ApiError(400, "Current password is incorrect");
+      return { message: "current password is incorrect" };
     }
 
     // Hash new password

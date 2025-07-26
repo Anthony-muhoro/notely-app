@@ -12,10 +12,6 @@ UserRouter.put(
   UserController.changeProfileImage
 );
 
-UserRouter.put(
-  "/change-profileimage",
-  protect,
-  UserController.changeProfileImage
-);
+UserRouter.put("/change-password", protect, UserController.changePassword);
 
 export default UserRouter;
