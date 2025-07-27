@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,10 +48,10 @@ interface NoteCardProps {
 
 export function NoteCard({ note, onView, onEdit, onDelete }: NoteCardProps) {
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -114,12 +113,12 @@ export function NoteCard({ note, onView, onEdit, onDelete }: NoteCardProps) {
                     Delete
                   </DropdownMenuItem>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="bg-white">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete note?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action will move the note to trash. You can restore it
-                      later if needed.
+                      This action will move the note to trash. You can restore
+                      it later if needed.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

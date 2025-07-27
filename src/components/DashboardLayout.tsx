@@ -1,7 +1,12 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -10,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   FileText,
   Plus,
@@ -99,6 +105,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-72 p-0 bg-white border-r">
+          <VisuallyHidden>
+            <SheetTitle>Mobile Navigation Menu</SheetTitle>
+            <SheetDescription>
+              This is the mobile navigation menu for the site.
+            </SheetDescription>
+          </VisuallyHidden>
           <div className="flex h-full flex-col">
             <div className="flex items-center px-6 py-5 border-b bg-white">
               <FileText className="h-6 w-6 text-orange-500 mr-2" />

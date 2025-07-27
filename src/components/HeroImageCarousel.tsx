@@ -78,7 +78,7 @@ const HeroImageCarousel = () => {
           variant="outline"
           size="icon"
           onClick={prevSlide}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30 transition-all duration-200"
+          className="absolute left-4 top-1/4 md:top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30 transition-all duration-200"
         >
           <ChevronLeft className="h-5 w-5 text-white" />
         </Button>
@@ -87,7 +87,7 @@ const HeroImageCarousel = () => {
           variant="outline"
           size="icon"
           onClick={nextSlide}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30 transition-all duration-200"
+          className="absolute right-4 top-1/4 md:top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30 transition-all duration-200"
         >
           <ChevronRight className="h-5 w-5 text-white" />
         </Button>
@@ -103,6 +103,7 @@ const HeroImageCarousel = () => {
                   ? "bg-white scale-110"
                   : "bg-white/50 hover:bg-white/70"
               }`}
+              aria-label={`Go to slide ${index + 1}`}
             />
           ))}
         </div>
