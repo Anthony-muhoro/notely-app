@@ -1,3 +1,4 @@
+
 import ApiClient from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { create } from "zustand";
@@ -12,6 +13,8 @@ interface Note {
   createdAt: Date;
   updatedAt: Date;
   isDeleted?: boolean;
+  isPinned?: boolean;
+  isBookmarked?: boolean;
 }
 
 interface AppState {
@@ -23,12 +26,18 @@ interface AppState {
   deleteNote: (id: string) => void;
   permanentlyDeleteNote: (id: string) => void;
   restoreNote: (id: string) => void;
+  pinNote: (id: string) => void;
+  unpinNote: (id: string) => void;
+  bookmarkNote: (id: string) => void;
+  unbookmarkNote: (id: string) => void;
   setCurrentNote: (note: Note | null) => void;
   setLoading: (loading: boolean) => void;
   getNoteById: (id: string) => Note | undefined;
   getActiveNotes: () => Note[] | any;
   getDeletedNotes: () => Note[];
   getPublicNotes: () => Note[];
+  getPinnedNotes: () => Note[];
+  getBookmarkedNotes: () => Note[];
 }
 
 export const useStore = create<AppState>()(
@@ -46,6 +55,8 @@ export const useStore = create<AppState>()(
             createdAt: new Date(),
             updatedAt: new Date(),
             isDeleted: false,
+            isPinned: false,
+            isBookmarked: false,
           };
           return { notes: [...state.notes, newNote] };
         }),
@@ -82,6 +93,42 @@ export const useStore = create<AppState>()(
           ),
         })),
 
+      pinNote: (id) =>
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id
+              ? { ...note, isPinned: true, updatedAt: new Date() }
+              : note
+          ),
+        })),
+
+      unpinNote: (id) =>
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id
+              ? { ...note, isPinned: false, updatedAt: new Date() }
+              : note
+          ),
+        })),
+
+      bookmarkNote: (id) =>
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id
+              ? { ...note, isBookmarked: true, updatedAt: new Date() }
+              : note
+          ),
+        })),
+
+      unbookmarkNote: (id) =>
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id
+              ? { ...note, isBookmarked: false, updatedAt: new Date() }
+              : note
+          ),
+        })),
+
       setCurrentNote: (note) => set({ currentNote: note }),
       setLoading: (loading) => set({ isLoading: loading }),
 
@@ -106,6 +153,14 @@ export const useStore = create<AppState>()(
 
       getPublicNotes: () => {
         return get().notes.filter((note) => note.isPublic && !note.isDeleted);
+      },
+
+      getPinnedNotes: () => {
+        return get().notes.filter((note) => note.isPinned && !note.isDeleted);
+      },
+
+      getBookmarkedNotes: () => {
+        return get().notes.filter((note) => note.isBookmarked && !note.isDeleted);
       },
     }),
     {

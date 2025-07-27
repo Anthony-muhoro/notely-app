@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FileText, Search, Shield, Edit3 } from "lucide-react";
+import { FileText, Bot, Search, Edit3, Mic, Zap } from "lucide-react";
 import LandingNavbar from "@/components/LandingNavbar";
 import HeroVideoSection from "@/components/HeroVideoSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
@@ -22,8 +22,9 @@ const Index = () => {
       await import("aos");
       Aos.init({
         duration: 1000,
-        easing: "ease",
+        easing: "ease-out-cubic",
         once: false,
+        offset: 100,
       });
     };
     initAOS();
@@ -31,27 +32,51 @@ const Index = () => {
 
   const features = [
     {
-      icon: <Edit3 className="h-8 w-8 text-orange-500" />,
+      icon: <Bot className="h-8 w-8 text-orange-500" />,
+      title: "Voice Chat with Your Notes",
+      description:
+        "Revolutionary AI-powered voice assistant that understands your notes and helps you interact with them naturally through conversation.",
+      gradient: "from-orange-50 to-orange-100",
+    },
+    {
+      icon: <Edit3 className="h-8 w-8 text-blue-500" />,
       title: "Rich Text Editor",
       description:
-        "Write with advanced formatting, highlighting, and image support for beautiful notes.",
+        "Professional-grade editor with advanced formatting, highlighting, and multimedia support for creating beautiful, structured notes.",
+      gradient: "from-blue-50 to-blue-100",
     },
     {
-      icon: <Search className="h-8 w-8 text-blue-500" />,
+      icon: <Search className="h-8 w-8 text-purple-500" />,
       title: "Smart Organization",
       description:
-        "Find your notes instantly with powerful search, tagging, and filtering capabilities.",
+        "Intelligent search and organization system that helps you find any note instantly with powerful filtering and categorization.",
+      gradient: "from-purple-50 to-purple-100",
     },
     {
-      icon: <Shield className="h-8 w-8 text-purple-500" />,
-      title: "Export & Share",
+      icon: <Mic className="h-8 w-8 text-green-500" />,
+      title: "Voice Commands",
       description:
-        "Download as PDF or share your notes seamlessly with enterprise-grade security.",
+        "Control your notes with voice commands - create, edit, search, and organize everything hands-free with natural language processing.",
+      gradient: "from-green-50 to-green-100",
+    },
+    {
+      icon: <Zap className="h-8 w-8 text-yellow-500" />,
+      title: "AI-Powered Insights",
+      description:
+        "Get intelligent suggestions, summaries, and insights from your notes with advanced AI that learns from your writing patterns.",
+      gradient: "from-yellow-50 to-yellow-100",
+    },
+    {
+      icon: <FileText className="h-8 w-8 text-indigo-500" />,
+      title: "Seamless Sync",
+      description:
+        "Access your notes anywhere with real-time synchronization across all devices, ensuring your thoughts are always available.",
+      gradient: "from-indigo-50 to-indigo-100",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 max-w-[99%] overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       <LandingNavbar />
 
       <HeroVideoSection />
@@ -60,34 +85,41 @@ const Index = () => {
         <div className="text-center mb-16">
           <h2
             className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
-            data-aos="fade-left"
+            data-aos="fade-up"
           >
-            Everything you need to stay organized
+            Next-Generation Note-Taking
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Powerful features designed to help you capture and organize your
-            thoughts effortlessly with professional-grade tools.
+          <p
+            className="text-gray-600 text-lg max-w-2xl mx-auto"
+            data-aos="fade-up"
+            data-aos-delay="100"
+          >
+            Powered by advanced AI technology, our platform transforms how you
+            create, organize, and interact with your notes through natural
+            conversation.
           </p>
         </div>
-        <div className="grid md:grid-cols-3 gap-8">
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <Card
               key={index}
-              className="text-center border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 bg-white"
+              data-aos="fade-up"
+              data-aos-delay={index * 100}
             >
-              <CardHeader>
+              <CardHeader className="text-center pb-4">
                 <div
-                  className="mx-auto mb-4 p-3 bg-gray-50 rounded-full w-fit"
-                  data-aos="flip-left"
+                  className={`mx-auto mb-4 p-4 bg-gradient-to-br ${feature.gradient} rounded-2xl w-fit shadow-sm group-hover:shadow-md transition-shadow duration-300`}
                 >
                   {feature.icon}
                 </div>
-                <CardTitle className="text-xl" data-aos="flip-up">
+                <CardTitle className="text-xl font-semibold text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
                   {feature.title}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-gray-600 leading-relaxed">
+                <CardDescription className="text-gray-600 leading-relaxed text-center">
                   {feature.description}
                 </CardDescription>
               </CardContent>
@@ -102,7 +134,7 @@ const Index = () => {
 
       <footer
         id="contact"
-        className="px-4 py-12 mx-auto max-w-7xl border-t bg-white"
+        className="px-4 py-12 mx-auto max-w-7xl border-t bg-white/80 backdrop-blur-sm"
       >
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
@@ -111,7 +143,7 @@ const Index = () => {
           </div>
           <div className="flex space-x-6 text-gray-600">
             <a href="#" className="hover:text-orange-500 transition-colors">
-              Linkedln
+              LinkedIn
             </a>
             <a href="#" className="hover:text-orange-500 transition-colors">
               X

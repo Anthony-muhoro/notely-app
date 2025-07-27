@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ModernSwitch } from "@/components/ui/modern-switch";
-import { ArrowLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import DashboardLayout from "@/components/DashboardLayout";
 import WordLikeEditor from "@/components/editor/WordLikeEditor";
-import VoiceAssistant from "@/components/ai/VoiceAssistant";
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
 import { useStore } from "@/store/useStore";
 import { useMutation } from "@tanstack/react-query";
 import ApiClient from "@/lib/api";
@@ -73,8 +73,8 @@ const NewNote = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+          <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Note Details</CardTitle>
@@ -115,55 +115,48 @@ const NewNote = () => {
               </CardContent>
             </Card>
 
-            <div>
-              <Label className="text-base font-medium mb-4 block">Content</Label>
-              <WordLikeEditor
-                value={formData.content}
-                onChange={(value) => handleChange("content", value)}
-              />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Content</Label>
+                <div className="flex space-x-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/dashboard")}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="bg-orange-500 hover:bg-orange-600"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Note
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="min-h-[400px]">
+                <WordLikeEditor
+                  value={formData.content}
+                  onChange={(value) => handleChange("content", value)}
+                />
+              </div>
             </div>
-
-            <div className="flex justify-end space-x-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/dashboard")}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="bg-orange-500 hover:bg-orange-600"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Note
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          <div className="lg:col-span-1">
-            <VoiceAssistant
-              noteContent={formData.content}
-              noteTitle={formData.title}
-              onSummary={(summary) => {
-                if (!formData.synopsis) {
-                  handleChange("synopsis", summary);
-                }
-              }}
-            />
           </div>
         </div>
       </div>
+      <VoiceAssistant context="new-note" />
     </DashboardLayout>
   );
 };

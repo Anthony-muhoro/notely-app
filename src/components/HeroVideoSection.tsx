@@ -1,5 +1,7 @@
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import HeroImageCarousel from "./HeroImageCarousel";
 
 const HeroVideoSection = () => {
   const navigate = useNavigate();
@@ -7,51 +9,36 @@ const HeroVideoSection = () => {
   return (
     <section id="home" className="pt-24 pb-20 px-4 mx-auto max-w-7xl">
       <div className="text-center mb-12">
-        <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6">
-          Capture. Organize.
-          <span className="text-orange-500 block" data-aos="fade-right">
-            Reflect.
+        <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6" data-aos="fade-up">
+          Think. Write.
+          <span className="text-orange-500 block" data-aos="fade-right" data-aos-delay="200">
+            Converse.
           </span>
         </h1>
-        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-          The simplest way to take, organize, and manage your thoughts.
-          Transform your ideas into actionable insights.
+        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="300">
+          Experience the future of note-taking with AI-powered voice conversations. 
+          Chat with your notes, organize thoughts naturally, and unlock new insights.
         </p>
       </div>
 
-      <div className="relative max-w-4xl mx-auto mb-8">
-        <div className="relative aspect-video bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-purple-500 to-blue-600 opacity-80 z-0" />
-          <video
-            src="/hero.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover z-10"
-          />
-          <div className="absolute bottom-4 left-4 right-4 z-20">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <h3 className="text-white font-semibold mb-2">
-                See Notely in Action
-              </h3>
-              <p className="text-white/80 text-sm">
-                Watch how easy it is to create, organize, and share your notes
-              </p>
-            </div>
-          </div>
-        </div>
+      <div data-aos="zoom-in" data-aos-delay="400">
+        <HeroImageCarousel />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <div className="flex flex-col sm:flex-row gap-4 justify-center" data-aos="fade-up" data-aos-delay="500">
         <Button
           size="lg"
-          className="bg-orange-500 hover:bg-orange-600"
+          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg transition-all duration-200 transform hover:scale-105"
           onClick={() => navigate("/signup")}
         >
-          Get Started Free
+          Start Creating Notes
         </Button>
-        <Button size="lg" variant="outline" onClick={() => navigate("/login")}>
+        <Button 
+          size="lg" 
+          variant="outline" 
+          className="border-2 border-orange-500 text-orange-500 hover:bg-orange-50 transition-all duration-200"
+          onClick={() => navigate("/login")}
+        >
           Sign In
         </Button>
       </div>

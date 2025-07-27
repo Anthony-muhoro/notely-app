@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import ApiClient from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowLeft,
   Edit3,
@@ -11,7 +13,7 @@ import {
   Pin,
   Bookmark,
   MoreHorizontal,
-  Loader2,
+  User,
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useToast } from "@/hooks/use-toast";
@@ -32,12 +34,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ShareButton } from "@/components/sharing/ShareButton";
+import { NoteDetailsSkeleton } from "@/components/ui/note-details-skeleton";
+import { useStore } from "@/store/useStore";
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
 
 const NoteDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { pinNote, unpinNote, bookmarkNote, unbookmarkNote } = useStore();
   const [isPinned, setIsPinned] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
@@ -55,22 +60,38 @@ const NoteDetails = () => {
   });
 
   const handlePin = () => {
-    setIsPinned((prev) => !prev);
+    const newPinnedState = !isPinned;
+    setIsPinned(newPinnedState);
+    
+    if (newPinnedState) {
+      pinNote(id!);
+    } else {
+      unpinNote(id!);
+    }
+    
     toast({
-      title: isPinned ? "Note unpinned" : "Note pinned",
-      description: isPinned
-        ? "Note removed from pinned items."
-        : "Note added to pinned items.",
+      title: newPinnedState ? "Note pinned" : "Note unpinned",
+      description: newPinnedState
+        ? "Note added to pinned items."
+        : "Note removed from pinned items.",
     });
   };
 
   const handleBookmark = () => {
-    setIsBookmarked((prev) => !prev);
+    const newBookmarkState = !isBookmarked;
+    setIsBookmarked(newBookmarkState);
+    
+    if (newBookmarkState) {
+      bookmarkNote(id!);
+    } else {
+      unbookmarkNote(id!);
+    }
+    
     toast({
-      title: isBookmarked ? "Bookmark removed" : "Note bookmarked",
-      description: isBookmarked
-        ? "Note removed from bookmarks."
-        : "Note added to bookmarks.",
+      title: newBookmarkState ? "Note bookmarked" : "Bookmark removed",
+      description: newBookmarkState
+        ? "Note added to bookmarks."
+        : "Note removed from bookmarks.",
     });
   };
 
@@ -94,10 +115,10 @@ const NoteDetails = () => {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="max-w-4xl mx-auto py-16 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-orange-500" />
-          <p className="text-gray-600 text-lg">Loading note...</p>
-        </div>
+        <NoteDetailsSkeleton />
+        <VoiceAssistant 
+          pageContext="I can help you understand this note's content, suggest related topics, or help you navigate to other sections."
+        />
       </DashboardLayout>
     );
   }
@@ -114,6 +135,7 @@ const NoteDetails = () => {
             Back to Dashboard
           </Button>
         </div>
+        <VoiceAssistant />
       </DashboardLayout>
     );
   }
@@ -176,13 +198,13 @@ const NoteDetails = () => {
           </div>
         </div>
 
-        {/* Note Content */}
         <div className="bg-white rounded-lg shadow-lg border-0 p-8">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl font-bold text-gray-900 mb-6">
               {note.title}
             </h1>
-            <div className="flex items-center space-x-2 mb-4">
+            
+            <div className="flex items-center space-x-2 mb-6">
               {note.isPublic && (
                 <Badge
                   variant="secondary"
@@ -210,32 +232,51 @@ const NoteDetails = () => {
                 </Badge>
               )}
             </div>
-            <div className="text-sm text-gray-500 border-b pb-4">
-              <p>
-                Date Published:{" "}
-                {new Date(note.dateCreated).toLocaleDateString("en-US", {
+
+            <div className="flex items-center space-x-4 mb-6">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={note.author?.avatar} alt="Author" />
+                <AvatarFallback className="bg-orange-100 text-orange-700">
+                  <User className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium text-gray-900">
+                  {note.author?.name || "Anonymous"}
+                </p>
+                <p className="text-sm text-gray-600">Author</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-500 border-b pb-6">
+              <div>
+                <p className="font-medium text-gray-700">Date Published</p>
+                <p>{new Date(note.dateCreated).toLocaleDateString("en-US", {
                   day: "numeric",
                   month: "long",
                   year: "numeric",
-                })}
-              </p>
-              <p>
-                Last updated:{" "}
-                {new Date(note.lastUpdated).toLocaleDateString("en-US", {
+                })}</p>
+              </div>
+              <div>
+                <p className="font-medium text-gray-700">Last Updated</p>
+                <p>{new Date(note.lastUpdated).toLocaleDateString("en-US", {
                   day: "numeric",
                   month: "long",
                   year: "numeric",
-                })}
-              </p>
+                })}</p>
+              </div>
             </div>
           </div>
 
           <div
-            className="prose max-w-none"
+            className="prose max-w-none text-gray-800 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: note.content }}
           />
         </div>
       </div>
+      <VoiceAssistant 
+        pageContext="I can help you understand this note's content, suggest related topics, or help you navigate to other sections."
+      />
     </DashboardLayout>
   );
 };

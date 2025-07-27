@@ -23,17 +23,17 @@ const VerifyEmail = () => {
     searchParams.get("email") ||
     localStorage.getItem("pending_verification_email");
 
-  const handleResendVerification = async () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      toast({
-        title: "Verification email sent!",
-        description: "Check your inbox for the verification link.",
-      });
-      setIsLoading(false);
-    }, 1000);
-  };
+  // const handleResendVerification = async () => {
+  //   setIsLoading(true);
+  //   // Simulate API call
+  //   setTimeout(() => {
+  //     toast({
+  //       title: "Verification email sent!",
+  //       description: "Check your inbox for the verification link.",
+  //     });
+  //     setIsLoading(false);
+  //   }, 1000);
+  // };
 
   const handleVerifyToken = async () => {
     if (token) {
@@ -120,7 +120,8 @@ const VerifyEmail = () => {
             </div>
             <CardTitle className="text-2xl">Check your email</CardTitle>
             <CardDescription className="text-base">
-              We've sent a verification link to{" "}
+              We've sent a verification link to. If you did not not receive
+              email check your spam folder
               <span className="font-medium text-gray-900">{email}</span>
             </CardDescription>
           </CardHeader>
@@ -131,7 +132,7 @@ const VerifyEmail = () => {
                 started with Notely.
               </p>
 
-              <div className="space-y-3">
+              {/* <div className="space-y-3">
                 <Button
                   onClick={handleResendVerification}
                   disabled={isLoading}
@@ -157,17 +158,14 @@ const VerifyEmail = () => {
                     Back to login
                   </Link>
                 </Button>
-              </div>
+              </div> */}
             </div>
 
             <div className="pt-4 border-t">
               <p className="text-xs text-gray-500 text-center">
                 Didn't receive the email? Check your spam folder or{" "}
-                <button
-                  onClick={handleResendVerification}
-                  className="text-orange-500 hover:text-orange-600 underline"
-                >
-                  try a different email address
+                <button className="text-orange-500 hover:text-orange-600 underline">
+                  <Link to="/signup">Try another email address</Link>
                 </button>
               </p>
             </div>

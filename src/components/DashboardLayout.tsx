@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -18,23 +19,25 @@ import {
   User,
   LogOut,
   Menu,
-  Settings,
   Globe,
   LockKeyhole,
 } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/store/useAuth";
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
+
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const { refreshUser, token, user, logout } = useAuth();
+
   useEffect(() => {
     refreshUser();
     if (!token) {
@@ -50,11 +53,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: "Trash", href: "/trash", icon: Trash2 },
     { name: "Public Notes", href: "/public", icon: Globe },
   ];
+
   const handleLogout = async () => {
     logout();
-    toast(<p>You have successfuly logged out </p>);
+    toast(<p>You have successfully logged out </p>);
     navigate("/");
   };
+
   const initials = (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "");
 
   const NavItems = () => (
@@ -80,6 +85,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       })}
     </nav>
   );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -104,6 +110,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
         </SheetContent>
       </Sheet>
+
       <div className="hidden md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 z-40">
         <div className="flex flex-col flex-grow border-r bg-white shadow-sm">
           <div className="flex items-center flex-shrink-0 px-6 py-5 border-b">
@@ -115,6 +122,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
         </div>
       </div>
+
       <div className="md:pl-72 flex flex-col flex-1">
         <div className="sticky top-0 z-30 flex-shrink-0 flex h-16 bg-white border-b shadow-sm">
           <div className="flex-1 px-4 flex justify-between items-center">
@@ -125,13 +133,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600 hidden sm:block">
-                Welcome back,{user?.firstName}
+                Welcome back, {user?.firstName}
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-8 w-8 rounded-full "
+                    className="relative h-8 w-8 rounded-full"
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user?.avatar} alt="Profile" />
@@ -158,7 +166,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                     className="hover:bg-gray-50 cursor-pointer"
                   >
                     <LockKeyhole className="mr-2 h-4 w-4" />
-                    change password
+                    Change Password
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -175,6 +183,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </div>
         <main className="flex-1 p-6">{children}</main>
       </div>
+      <VoiceAssistant />
     </div>
   );
 };

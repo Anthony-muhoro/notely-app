@@ -12,7 +12,6 @@ const WordLikeEditor = ({ value, onChange }: WordLikeEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize editor content only once when value changes from empty to non-empty
   useEffect(() => {
     if (editorRef.current && value && !editorRef.current.innerHTML) {
       editorRef.current.innerHTML = value;
@@ -60,8 +59,9 @@ const WordLikeEditor = ({ value, onChange }: WordLikeEditorProps) => {
           // Remove previous selections
           const prevSelected = editorRef.current?.querySelectorAll('img[data-selected="true"]');
           prevSelected?.forEach(prevImg => {
-            prevImg.style.border = '2px solid transparent';
-            prevImg.removeAttribute('data-selected');
+            const imgElement = prevImg as HTMLImageElement;
+            imgElement.style.border = '2px solid transparent';
+            imgElement.removeAttribute('data-selected');
           });
           
           // Select current image
@@ -74,13 +74,6 @@ const WordLikeEditor = ({ value, onChange }: WordLikeEditorProps) => {
             const range = document.createRange();
             range.selectNode(img);
             selection.addRange(range);
-          }
-        });
-
-        // Handle resize
-        img.addEventListener('mousedown', (e) => {
-          if (e.target === img) {
-            e.preventDefault();
           }
         });
 
@@ -132,26 +125,27 @@ const WordLikeEditor = ({ value, onChange }: WordLikeEditorProps) => {
     // Deselect images when clicking elsewhere
     const selectedImgs = editorRef.current?.querySelectorAll('img[data-selected="true"]');
     selectedImgs?.forEach(img => {
-      img.style.border = '2px solid transparent';
-      img.removeAttribute('data-selected');
+      const imgElement = img as HTMLImageElement;
+      imgElement.style.border = '2px solid transparent';
+      imgElement.removeAttribute('data-selected');
     });
   }, []);
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden shadow-sm border-gray-200">
       <RichTextToolbar
         onFormatText={handleFormatText}
         onImageUpload={handleImageUpload}
       />
       
-      <div className="min-h-[600px] bg-white">
+      <div className="bg-white">
         <div
           ref={editorRef}
           contentEditable
           onInput={handleContentChange}
           onKeyDown={handleKeyDown}
           onClick={handleClick}
-          className="min-h-[600px] p-8 focus:outline-none prose prose-lg max-w-none"
+          className="min-h-[500px] p-8 focus:outline-none prose prose-lg max-w-none transition-all duration-200"
           style={{
             lineHeight: '1.6',
             fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
@@ -159,6 +153,7 @@ const WordLikeEditor = ({ value, onChange }: WordLikeEditorProps) => {
             textAlign: 'left',
           }}
           suppressContentEditableWarning={true}
+          placeholder="Start writing your note..."
         />
       </div>
 

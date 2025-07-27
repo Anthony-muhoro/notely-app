@@ -7,13 +7,12 @@ import { useScrollToTop } from "@/hooks/useScrollToTop";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useStore } from "@/store/useStore";
 import { Link } from "react-router-dom";
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
 
 const PinnedNotes = () => {
   useScrollToTop();
-  const { notes } = useStore();
-  
-  // Mock pinned notes for demo
-  const pinnedNotes = notes.filter(note => note.title.includes("Meeting"));
+  const { getPinnedNotes } = useStore();
+  const pinnedNotes = getPinnedNotes();
 
   return (
     <DashboardLayout>
@@ -74,6 +73,9 @@ const PinnedNotes = () => {
           </div>
         )}
       </div>
+      <VoiceAssistant 
+        pageContext="I can help you manage your pinned notes, find specific content, or suggest organization strategies."
+      />
     </DashboardLayout>
   );
 };
