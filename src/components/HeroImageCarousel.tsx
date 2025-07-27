@@ -1,30 +1,29 @@
-
-import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const HeroImageCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   const slides = [
     {
       id: 1,
-      image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=800&h=600&fit=crop",
+      image: "/capture1.png",
       title: "Capture Your Thoughts",
-      description: "Take notes with our advanced rich text editor"
+      description: "Take notes with our advanced rich text editor",
     },
     {
       id: 2,
-      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop",
+      image: "/voice.png",
       title: "Voice Chat with Notes",
-      description: "Talk to your notes with AI-powered voice assistance"
+      description: "Talk to your notes with AI-powered voice assistance",
     },
     {
       id: 3,
-      image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&h=600&fit=crop",
+      image: "/organized.png",
       title: "Stay Organized",
-      description: "Find and organize your notes effortlessly"
-    }
+      description: "Find and organize your notes effortlessly",
+    },
   ];
 
   useEffect(() => {
@@ -50,7 +49,7 @@ const HeroImageCarousel = () => {
           <div
             key={slide.id}
             className={`absolute inset-0 transition-opacity duration-700 ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
+              index === currentSlide ? "opacity-100" : "opacity-0"
             }`}
           >
             <img
@@ -63,13 +62,17 @@ const HeroImageCarousel = () => {
               <h3 className="text-2xl font-bold mb-2" data-aos="fade-up">
                 {slide.title}
               </h3>
-              <p className="text-white/90 text-lg" data-aos="fade-up" data-aos-delay="100">
+              <p
+                className="text-white/90 text-lg"
+                data-aos="fade-up"
+                data-aos-delay="100"
+              >
                 {slide.description}
               </p>
             </div>
           </div>
         ))}
-        
+
         {/* Navigation buttons */}
         <Button
           variant="outline"
@@ -79,7 +82,7 @@ const HeroImageCarousel = () => {
         >
           <ChevronLeft className="h-5 w-5 text-white" />
         </Button>
-        
+
         <Button
           variant="outline"
           size="icon"
@@ -88,7 +91,7 @@ const HeroImageCarousel = () => {
         >
           <ChevronRight className="h-5 w-5 text-white" />
         </Button>
-        
+
         {/* Dot indicators */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
           {slides.map((_, index) => (
@@ -96,9 +99,9 @@ const HeroImageCarousel = () => {
               key={index}
               onClick={() => setCurrentSlide(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentSlide 
-                  ? 'bg-white scale-110' 
-                  : 'bg-white/50 hover:bg-white/70'
+                index === currentSlide
+                  ? "bg-white scale-110"
+                  : "bg-white/50 hover:bg-white/70"
               }`}
             />
           ))}
