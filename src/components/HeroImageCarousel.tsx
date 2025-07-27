@@ -8,19 +8,19 @@ const HeroImageCarousel = () => {
   const slides = [
     {
       id: 1,
-      image: "/capture1.png",
+      image: "https://ik.imagekit.io/muhorodev/takenotes",
       title: "Capture Your Thoughts",
       description: "Take notes with our advanced rich text editor",
     },
     {
       id: 2,
-      image: "/voice.png",
+      image: "https://ik.imagekit.io/muhorodev/voicechat",
       title: "Voice Chat with Notes",
       description: "Talk to your notes with AI-powered voice assistance",
     },
     {
       id: 3,
-      image: "/organized.png",
+      image: "https://ik.imagekit.io/muhorodev/organized",
       title: "Stay Organized",
       description: "Find and organize your notes effortlessly",
     },
