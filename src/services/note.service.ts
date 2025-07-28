@@ -99,7 +99,7 @@ Title: "${title}"
 
 Generate:
 1. A short, clear synopsis (max 150 characters)
-2. A detailed, well-structured content section with proper formatting.
+2.  A detailed, well-structured content section written in natural language, in plain text format only.
 
 Respond in this format:
 Synopsis: [your synopsis here]
@@ -141,6 +141,7 @@ ${content}
 
 Now rewrite it in a more polished and structured way.
 just give the only one result. no explanations or suggestion ,just rewrite well.
+ written in natural language, in plain text format only.
 `;
 
     try {
