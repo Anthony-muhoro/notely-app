@@ -16,7 +16,9 @@ export const validate = (schema: z.ZodSchema) => {
         const errorMessages = error.issues.map(
           (err: ZodIssue) =>
             `${err.path
-              .map((p) => (typeof p === "symbol" ? p.toString() : p))
+              .map((p: string | number | symbol) =>
+                typeof p === "symbol" ? p.toString() : p
+              )
               .join(".")}: ${err.message}`
         );
         throw new ApiError(
