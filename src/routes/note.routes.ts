@@ -21,8 +21,6 @@ NotesRouter.get(
   NoteController.getNoteById
 );
 NotesRouter.get("/public", NoteController.getPublicNotes);
-
-// Group user-specific routes
 NotesRouter.get("/", validate(getNotesSchema), NoteController.getUserNotes);
 NotesRouter.get("/deleted-notes", protect, NoteController.getDeletedNotes);
 NotesRouter.get("/:id", NoteController.getNoteById);
@@ -33,6 +31,8 @@ NotesRouter.post(
   validate(createNoteSchema),
   NoteController.createNote
 );
+NotesRouter.post("/gemininote", protect, NoteController.createNotewithgemini);
+NotesRouter.post("/rewrite", protect, NoteController.rewriteContentWithGemini);
 NotesRouter.put("/:id", validate(updateNoteSchema), NoteController.updateNote);
 NotesRouter.delete("/:id", validate(getNoteSchema), NoteController.deleteNote);
 NotesRouter.post("/:id/images", uploadImages, NoteController.addImages);

@@ -22,6 +22,44 @@ export class NoteController {
       .status(201)
       .json(new ApiResponse(201, note, "Note created successfully"));
   });
+  static createNotewithgemini = asyncHandler(
+    async (req: NoteRequest, res: Response) => {
+      const result = await NoteService.createwithgeminiNote(
+        req.user!.id,
+        req.body
+      );
+
+      if ((result as any).success === false) {
+        return res
+          .status(500)
+          .json({ success: false, message: "Failed to generate a note" });
+      }
+
+      res
+        .status(201)
+        .json(new ApiResponse(201, result, "Note created successfully"));
+    }
+  );
+  static rewriteContentWithGemini = asyncHandler(
+    async (req: NoteRequest, res: Response) => {
+      const { content, title } = req.body;
+
+      const result = await NoteService.rewriteNoteContentWithGemini(
+        content,
+        title
+      );
+
+      if ((result as any).success === false) {
+        return res
+          .status(500)
+          .json({ success: false, message: "Failed to rewrite content" });
+      }
+
+      res
+        .status(200)
+        .json(new ApiResponse(200, result, "Content rewritten successfully"));
+    }
+  );
 
   static getUserNotes = asyncHandler(
     async (req: AuthenticatedRequest, res: Response) => {

@@ -3,7 +3,6 @@ import { Request } from "express";
 import { ApiError } from "../utils/apiError";
 
 const storage = multer.memoryStorage();
-
 const fileFilter = (
   req: Request,
   file: Express.Multer.File,

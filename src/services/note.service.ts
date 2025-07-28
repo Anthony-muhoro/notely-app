@@ -1,7 +1,11 @@
 import prisma from "../config/prisma";
 import imagekit from "../config/imagekit";
 import { ApiError } from "../utils/apiError";
+import { google } from "@ai-sdk/google";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
 interface CreateNoteData {
   title: string;
   synopsis: string;
@@ -84,6 +88,76 @@ export class NoteService {
     }
 
     return note;
+  }
+  static async createwithgeminiNote(userId: string, noteData: CreateNoteData) {
+    const { title } = noteData;
+
+    const prompt = `
+You are an assistant that generates well-written notes based on a title.
+
+Title: "${title}"
+
+Generate:
+1. A short, clear synopsis (max 150 characters)
+2. A detailed, well-structured content section with proper formatting.
+
+Respond in this format:
+Synopsis: [your synopsis here]
+Content: [your content here]
+`;
+
+    let synopsis = "";
+    let content = "";
+
+    try {
+      const result = await model.generateContent(prompt);
+      const text = await result.response.text();
+
+      const synopsisMatch = text.match(/Synopsis:\s*(.+)/i);
+      const contentMatch = text.match(/Content:\s*([\s\S]+)/i);
+
+      if (!synopsisMatch || !contentMatch) {
+        throw new Error("Invalid response format from Gemini.");
+      }
+
+      synopsis = synopsisMatch[1].trim();
+      content = contentMatch[1].trim();
+    } catch (err) {
+      console.error("Gemini failed:", err);
+      return {
+        success: false,
+        message: "Failed to generate a note",
+      };
+    }
+
+    return { synopsis, content };
+  }
+  static async rewriteNoteContentWithGemini(content: string, title?: string) {
+    const prompt = `
+You are a helpful assistant that rewrites notes to be clearer, well-structured, and engaging.
+
+${title ? `Title: "${title}"\n` : ""}Original Content:
+${content}
+
+Now rewrite it in a more polished and structured way.
+just give the only one result. no explanations or suggestion ,just rewrite well.
+`;
+
+    try {
+      const result = await model.generateContent(prompt);
+      const rewrittenText = await result.response.text();
+
+      return {
+        success: true,
+        rewrittenContent: rewrittenText.trim(),
+      };
+    } catch (err) {
+      console.error(" Failed to rewrite note content:", err);
+      return {
+        success: false,
+        message: "Failed to rewrite the note content.",
+      };
+    }
   }
 
   static async getUserNotes(userId: string, filters: GetNotesFilters = {}) {

@@ -3,10 +3,7 @@ import { AuthController } from "../controllers/AuthController/auth.controller";
 import { validate } from "../utils/validation";
 import { protect } from "../middlewares/auth.middleware";
 import {
-  registerSchema,
-  loginSchema,
   forgotPasswordSchema,
-  resetPasswordSchema,
   verifyEmailSchema,
 } from "../validations/auth.validations";
 

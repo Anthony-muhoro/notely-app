@@ -11,7 +11,6 @@ UserRouter.put(
   uploadAvatar,
   UserController.changeProfileImage
 );
-
 UserRouter.put("/change-password", protect, UserController.changePassword);
 
 export default UserRouter;

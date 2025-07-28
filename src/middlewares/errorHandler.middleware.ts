@@ -10,17 +10,13 @@ export const errorHandler = (
 ): void => {
   let error = { ...err } as any;
   error.message = err.message;
-
-  // Log error
   console.error(err);
 
-  // Prisma validation error
   if (err instanceof Prisma.PrismaClientValidationError) {
     const message = "Invalid data provided";
     error = new ApiError(400, message);
   }
 
-  // Prisma known request error
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     let message = "Database error";
     let statusCode = 400;
@@ -45,8 +41,6 @@ export const errorHandler = (
 
     error = new ApiError(statusCode, message);
   }
-
-  // JWT errors
   if (err.name === "JsonWebTokenError") {
     const message = "Invalid token";
     error = new ApiError(401, message);
