@@ -195,7 +195,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </div>
         <main className="flex-1 p-6">{children}</main>
       </div>
-      <VoiceAssistant />
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +45,7 @@ const NewNote = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       addNote(formData);
       mutate();
@@ -106,7 +105,9 @@ const NewNote = () => {
                   <ModernSwitch
                     id="isPublic"
                     checked={formData.isPublic}
-                    onCheckedChange={(checked) => handleChange("isPublic", checked)}
+                    onCheckedChange={(checked) =>
+                      handleChange("isPublic", checked)
+                    }
                   />
                   <Label htmlFor="isPublic" className="font-medium">
                     Make this note public
@@ -145,7 +146,7 @@ const NewNote = () => {
                   </Button>
                 </div>
               </div>
-              
+
               <div className="min-h-[400px]">
                 <WordLikeEditor
                   value={formData.content}

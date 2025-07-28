@@ -1,196 +1,295 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mic, MicOff, Bot, BotOff } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "react-router-dom";
+import { Bot, PhoneOff, Volume2, Sparkles, Zap } from "lucide-react";
+import {
+  initializeVapi,
+  startVapiCall,
+  startExplainNoteCall,
+  stopVapiCall,
+  getVapiInstance,
+  isCallActive,
+  isVapiInitialized,
+} from "@/lib/vapi";
 import { useAuth } from "@/store/useAuth";
 
 interface VoiceAssistantProps {
-  className?: string;
-  pageContext?: string;
-  contextualActions?: string[];
+  context?: string;
+  assistantType?: "default" | "explain";
+  noteData?: {
+    title: string;
+    content: string;
+    dateCreated: string;
+    lastUpdated: string;
+  };
 }
 
 const VoiceAssistant = ({
-  className = "",
-  pageContext,
-  contextualActions = [],
+  context,
+  assistantType = "default",
+  noteData,
 }: VoiceAssistantProps) => {
-  const [isActive, setIsActive] = useState(false);
+  const [isCallActiveState, setIsCallActiveState] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-
-  const recognitionRef = useRef<any>(null);
-  const { toast } = useToast();
-  const location = useLocation();
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [callDuration, setCallDuration] = useState(0);
   const { user } = useAuth();
+
   useEffect(() => {
-    if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
-      const SpeechRecognition =
-        (window as any).webkitSpeechRecognition ||
-        (window as any).SpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = "en-US";
+    // Only initialize if not already initialized
+    if (!isVapiInitialized()) {
+      const initResult = initializeVapi();
+      if (!initResult) {
+        console.error("Failed to initialize Vapi");
+      }
     }
+
+    // Clean up on unmount
+    return () => {
+      if (isCallActive()) {
+        stopVapiCall().catch(console.error);
+      }
+    };
   }, []);
 
-  const getContextualHelp = () => {
-    if (pageContext) return pageContext;
+  useEffect(() => {
+    const vapi = getVapiInstance();
+    if (!vapi) return;
 
-    const path = location.pathname;
-    switch (path) {
-      case "/dashboard":
-        return `hello ${user?.firstName} , My name is Anthony muhoro your AI Assistance. currently I'm in development mode. I'll be ready propably come wednesday. relax for now`;
-      case "/new":
-        return `hello ${user?.firstName} , My name is Anthony muhoro your AI Assistance. currently I'm in development mode. I'll be ready propably come wednesday. relax for now`;
-      case "/trash":
-        return `hello ${user?.firstName} , My name is Anthony muhoro your AI Assistance. currently I'm in development mode. I'll be ready propably come wednesday. relax for now`;
-      case "/public":
-        return `hello ${user?.firstName} , My name is Anthony muhoro your AI Assistance. currently I'm in development mode. I'll be ready propably come wednesday. relax for now`;
-      case "/pinned":
-        return `hello ${user?.firstName} , My name is Anthony muhoro your AI Assistance. currently I'm in development mode. I'll be ready propably come wednesday. relax for now`;
-      case "/bookmarks":
-        return `hello ${user?.firstName} , My name is Anthony muhoro your AI Assistance. currently I'm in development mode. I'll be ready propably come wednesday. relax for now`;
-      default:
-        return;
+    const handleCallStart = () => {
+      setIsCallActiveState(true);
+      setIsConnecting(false);
+      setCallDuration(0);
+    };
+
+    const handleCallEnd = () => {
+      setIsCallActiveState(false);
+      setIsListening(false);
+      setIsSpeaking(false);
+      setIsConnecting(false);
+      setCallDuration(0);
+    };
+
+    const handleSpeechStart = () => {
+      setIsListening(true);
+      setIsSpeaking(false);
+    };
+
+    const handleSpeechEnd = () => {
+      setIsListening(false);
+    };
+
+    const handleBotSpeechStart = () => {
+      setIsSpeaking(true);
+      setIsListening(false);
+    };
+
+    const handleBotSpeechEnd = () => {
+      setIsSpeaking(false);
+    };
+
+    // Remove any existing listeners first
+    vapi.off("call-start", handleCallStart);
+    vapi.off("call-end", handleCallEnd);
+    vapi.off("speech-start", handleSpeechStart);
+    vapi.off("speech-end", handleSpeechEnd);
+
+    // Add new listeners
+    vapi.on("call-start", handleCallStart);
+    vapi.on("call-end", handleCallEnd);
+    vapi.on("speech-start", handleSpeechStart);
+    vapi.on("speech-end", handleSpeechEnd);
+
+    // Check if call is already active on mount
+    setIsCallActiveState(isCallActive());
+
+    return () => {
+      vapi.off("call-start", handleCallStart);
+      vapi.off("call-end", handleCallEnd);
+      vapi.off("speech-start", handleSpeechStart);
+      vapi.off("speech-end", handleSpeechEnd);
+    };
+  }, []);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isCallActiveState) {
+      interval = setInterval(() => {
+        setCallDuration((prev) => prev + 1);
+      }, 1000);
     }
-  };
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isCallActiveState]);
 
-  const startCall = () => {
-    if (!recognitionRef.current) {
-      toast({
-        title: "Voice Assistant Unavailable",
-        description: "Your browser doesn't support voice recognition.",
-        variant: "destructive",
-      });
+  const handleStartCall = async () => {
+    if (isCallActiveState) {
+      await stopVapiCall();
       return;
     }
 
-    setIsActive(true);
-    setIsListening(true);
-    recognitionRef.current.start();
-
-    recognitionRef.current.onresult = (event: any) => {
-      let finalTranscript = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+    setIsConnecting(true);
+    try {
+      if (assistantType === "explain" && noteData) {
+        const success = await startExplainNoteCall(
+          { firstName: user?.firstName || "User" },
+          noteData.title,
+          noteData.content || "No content available",
+          noteData.dateCreated,
+          noteData.lastUpdated
+        );
+        
+        if (!success) {
+          console.error("Failed to start explain note call");
+          // Optionally show error to user
+        }
+      } else {
+        const success = await startVapiCall(context);
+        if (!success) {
+          console.error("Failed to start Vapi call");
+          // Optionally show error to user
         }
       }
-
-      if (finalTranscript) {
-        setTranscript(finalTranscript);
-        processCommand(finalTranscript);
-      }
-    };
-
-    recognitionRef.current.onerror = () => {
-      setIsListening(false);
-      toast({
-        title: "Voice Recognition Error",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    };
-  };
-
-  const endCall = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setIsActive(false);
-    setIsListening(false);
-    setTranscript("");
-  };
-
-  const processCommand = (command: string) => {
-    const response = `${getContextualHelp()}`;
-
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(response);
-      utterance.rate = 0.8;
-      utterance.pitch = 1;
-      utterance.volume = 0.8;
-      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error("Error starting call:", error);
+      // Optionally show error to user
+    } finally {
+      setIsConnecting(false);
     }
   };
 
-  if (!isActive) {
+  const handleEndCall = async () => {
+    const success = await stopVapiCall();
+    if (!success) {
+      console.error("Failed to stop call");
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const getStatusColor = () => {
+    if (isConnecting) return "bg-yellow-500";
+    if (isListening) return "bg-red-500 animate-pulse";
+    if (isSpeaking) return "bg-blue-500 animate-pulse";
+    if (isCallActiveState) return "bg-green-500";
+    return "bg-gray-400";
+  };
+
+  const getAssistantName = () => {
+    return assistantType === "explain" ? "MUHORO" : "Notely";
+  };
+
+  if (!isCallActiveState && !isConnecting) {
     return (
-      <div className={`fixed bottom-6 right-6 z-50 ${className}`}>
+      <div className="fixed bottom-6 right-6 z-50">
         <Button
-          onClick={startCall}
-          className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg transition-all duration-200 transform hover:scale-105"
+          onClick={handleStartCall}
+          className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110 group"
           size="icon"
         >
-          <Bot className="h-6 w-6 text-white" />
+          <Bot className="h-7 w-7 text-white group-hover:scale-110 transition-transform" />
+          <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-yellow-300 animate-bounce" />
         </Button>
+        <div className="absolute bottom-20 right-0 bg-black text-white text-xs px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+          Click to start voice chat with {getAssistantName()}!
+        </div>
       </div>
     );
   }
 
   return (
-    <Card
-      className={`fixed bottom-6 right-6 z-50 w-80 shadow-2xl border-0 ${className}`}
-    >
+    <Card className="fixed bottom-6 right-6 z-50 w-80 shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div
-              className={`h-3 w-3 rounded-full ${
-                isListening ? "bg-red-500 animate-pulse" : "bg-gray-400"
-              }`}
-            />
-            <span className="text-sm font-semibold text-gray-800">
-              AI Assistant
-            </span>
-          </div>
-          <Button
-            onClick={endCall}
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 rounded-full border-red-200 hover:bg-red-50"
-          >
-            <BotOff className="h-4 w-4 text-red-600" />
-          </Button>
-        </div>
-
-        <div className="mb-4">
-          <p className="text-xs text-gray-600 mb-3 leading-relaxed">
-            {getContextualHelp()}
-          </p>
-          {transcript && (
-            <div className="p-3 bg-gray-50 rounded-lg text-sm border">
-              <p className="text-gray-500 text-xs mb-1 font-medium">
-                You said:
+            <div className={`h-3 w-3 rounded-full ${getStatusColor()}`} />
+            <div>
+              <span className="text-sm font-semibold text-gray-800">
+                {getAssistantName()} Assistant
+              </span>
+              <p className="text-xs text-gray-500">
+                {isConnecting
+                  ? "Connecting..."
+                  : isListening
+                  ? "Listening..."
+                  : isSpeaking
+                  ? "Speaking..."
+                  : isCallActiveState
+                  ? "Connected"
+                  : "Start Voice Chat"}
               </p>
-              <p className="text-gray-800">{transcript}</p>
+            </div>
+          </div>
+          {isCallActiveState && (
+            <div className="text-xs text-gray-500 font-mono">
+              {formatDuration(callDuration)}
             </div>
           )}
         </div>
-
-        <div className="flex justify-center">
+        {isCallActiveState && (
+          <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2">
+              {isListening ? (
+                <>
+                  <div className="flex gap-1">
+                    <div className="w-1 h-4 bg-red-500 rounded animate-pulse"></div>
+                    <div
+                      className="w-1 h-3 bg-red-400 rounded animate-pulse"
+                      style={{ animationDelay: "0.1s" }}
+                    ></div>
+                    <div
+                      className="w-1 h-5 bg-red-500 rounded animate-pulse"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-red-800 font-medium">
+                    Listening...
+                  </p>
+                </>
+              ) : isSpeaking ? (
+                <>
+                  <Volume2 className="h-4 w-4 text-blue-600 animate-pulse" />
+                  <p className="text-sm text-blue-800 font-medium">
+                    Speaking...
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 text-green-600" />
+                  <p className="text-sm text-green-800 font-medium">
+                    Ready to help!
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="flex gap-2">
           <Button
-            variant={isListening ? "destructive" : "default"}
+            onClick={handleEndCall}
+            variant="destructive"
             size="sm"
-            onClick={
-              isListening
-                ? () => setIsListening(false)
-                : () => setIsListening(true)
-            }
-            className="flex items-center gap-2 px-4 py-2"
+            className="flex-1 gap-2"
+            disabled={isConnecting}
           >
-            {isListening ? (
-              <MicOff className="h-4 w-4" />
-            ) : (
-              <Mic className="h-4 w-4" />
-            )}
-            {isListening ? "Stop Listening" : "Start Listening"}
+            <PhoneOff className="h-4 w-4" />
+            End Call
           </Button>
         </div>
+        {isConnecting && (
+          <div className="flex items-center justify-center gap-2 py-2 mt-4">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+            <span className="text-sm text-gray-600">
+              Connecting to {getAssistantName()}...
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -37,6 +36,7 @@ import {
 import { NoteDetailsSkeleton } from "@/components/ui/note-details-skeleton";
 import { useStore } from "@/store/useStore";
 import VoiceAssistant from "@/components/voice/VoiceAssistant";
+import { useAuth } from "@/store/useAuth";
 
 const NoteDetails = () => {
   const { id } = useParams();
@@ -45,7 +45,7 @@ const NoteDetails = () => {
   const { pinNote, unpinNote, bookmarkNote, unbookmarkNote } = useStore();
   const [isPinned, setIsPinned] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-
+  const { user } = useAuth();
   const {
     data: note,
     isLoading,
@@ -62,13 +62,13 @@ const NoteDetails = () => {
   const handlePin = () => {
     const newPinnedState = !isPinned;
     setIsPinned(newPinnedState);
-    
+
     if (newPinnedState) {
       pinNote(id!);
     } else {
       unpinNote(id!);
     }
-    
+
     toast({
       title: newPinnedState ? "Note pinned" : "Note unpinned",
       description: newPinnedState
@@ -80,13 +80,13 @@ const NoteDetails = () => {
   const handleBookmark = () => {
     const newBookmarkState = !isBookmarked;
     setIsBookmarked(newBookmarkState);
-    
+
     if (newBookmarkState) {
       bookmarkNote(id!);
     } else {
       unbookmarkNote(id!);
     }
-    
+
     toast({
       title: newBookmarkState ? "Note bookmarked" : "Bookmark removed",
       description: newBookmarkState
@@ -116,9 +116,7 @@ const NoteDetails = () => {
     return (
       <DashboardLayout>
         <NoteDetailsSkeleton />
-        <VoiceAssistant 
-          pageContext="I can help you understand this note's content, suggest related topics, or help you navigate to other sections."
-        />
+        <VoiceAssistant context={`Hello ${user?.firstName}`} />
       </DashboardLayout>
     );
   }
@@ -135,7 +133,15 @@ const NoteDetails = () => {
             Back to Dashboard
           </Button>
         </div>
-        <VoiceAssistant />
+        <VoiceAssistant
+          assistantType="explain"
+          noteData={{
+            title: note.title,
+            content: note.content,
+            dateCreated: note.dateCreated,
+            lastUpdated: note.lastUpdated,
+          }}
+        />
       </DashboardLayout>
     );
   }
@@ -203,7 +209,7 @@ const NoteDetails = () => {
             <h1 className="text-4xl font-bold text-gray-900 mb-6">
               {note.title}
             </h1>
-            
+
             <div className="flex items-center space-x-2 mb-6">
               {note.isPublic && (
                 <Badge
@@ -247,23 +253,27 @@ const NoteDetails = () => {
                 <p className="text-sm text-gray-600">Author</p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-500 border-b pb-6">
               <div>
                 <p className="font-medium text-gray-700">Date Published</p>
-                <p>{new Date(note.dateCreated).toLocaleDateString("en-US", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}</p>
+                <p>
+                  {new Date(note.dateCreated).toLocaleDateString("en-US", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
               <div>
                 <p className="font-medium text-gray-700">Last Updated</p>
-                <p>{new Date(note.lastUpdated).toLocaleDateString("en-US", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}</p>
+                <p>
+                  {new Date(note.lastUpdated).toLocaleDateString("en-US", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
             </div>
           </div>
@@ -275,7 +285,13 @@ const NoteDetails = () => {
         </div>
       </div>
       <VoiceAssistant 
-        pageContext="I can help you understand this note's content, suggest related topics, or help you navigate to other sections."
+        assistantType="explain"
+        noteData={{
+          title: note.title,
+          content: note.content,
+          dateCreated: note.dateCreated,
+          lastUpdated: note.lastUpdated
+        }}
       />
     </DashboardLayout>
   );
