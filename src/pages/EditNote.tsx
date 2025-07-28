@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,24 +5,36 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Save } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Save, Wand2, RotateCcw, Loader2 } from "lucide-react";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import DashboardLayout from "@/components/DashboardLayout";
 import WordLikeEditor from "@/components/editor/WordLikeEditor";
-import VoiceAssistant from "@/components/voice/VoiceAssistant";
 import { useQuery } from "@tanstack/react-query";
 import ApiClient from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ModernSwitch } from "@/components/ui/modern-switch";
+import { toast } from "sonner";
+
+interface FormData {
+  title: string;
+  synopsis: string;
+  content: string;
+  isPublic: boolean;
+}
+
+interface UndoState {
+  synopsis: string;
+  content: string;
+}
 
 const EditNote = () => {
   useScrollToTop();
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [isRewritingAI, setIsRewritingAI] = useState(false);
+  const [undoStack, setUndoStack] = useState<UndoState[]>([]);
+
   const {
     data: noteToEdit,
     isLoading,
@@ -37,7 +48,7 @@ const EditNote = () => {
     enabled: !!id,
   });
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: "",
     synopsis: "",
     content: "",
@@ -55,33 +66,79 @@ const EditNote = () => {
     }
   }, [noteToEdit]);
 
+  const saveCurrentState = () => {
+    const currentState: UndoState = {
+      synopsis: formData.synopsis,
+      content: formData.content,
+    };
+    setUndoStack((prev) => [...prev, currentState]);
+  };
+
+  const handleUndo = () => {
+    if (undoStack.length === 0) return;
+
+    const lastState = undoStack[undoStack.length - 1];
+    setFormData((prev) => ({
+      ...prev,
+      synopsis: lastState.synopsis,
+      content: lastState.content,
+    }));
+
+    setUndoStack((prev) => prev.slice(0, -1));
+  };
+
+  const handleRewriteWithAI = async () => {
+    if (!formData.title.trim()) {
+      toast(<p>Title required for AI rewrite</p>);
+      return;
+    }
+
+    if (!formData.content.trim() && !formData.synopsis.trim()) {
+      toast(<p>Add content before using AI rewrite</p>);
+      return;
+    }
+
+    setIsRewritingAI(true);
+    saveCurrentState();
+
+    try {
+      const response = await ApiClient.post("/notes/gemininote", {
+        title: formData.title,
+        existingContent: formData.content,
+        existingSynopsis: formData.synopsis,
+        action: "rewrite",
+      });
+
+      const { synopsis, content } = response.data.data;
+
+      setFormData((prev) => ({
+        ...prev,
+        synopsis: synopsis || prev.synopsis,
+        content: content || prev.content,
+      }));
+    } catch (error) {
+      console.error("AI rewrite error:", error);
+      toast(<p>Failed to rewrite content</p>);
+    } finally {
+      setIsRewritingAI(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     if (!formData.title.trim()) {
-      toast({
-        title: "Title required",
-        description: "Please enter a title for your note.",
-        variant: "destructive",
-      });
+      toast(<p>Title is required</p>);
       setIsSubmitting(false);
       return;
     }
 
     try {
       await ApiClient.put(`/notes/${id}`, formData);
-      toast({
-        title: "Note updated!",
-        description: "Your note has been updated successfully.",
-      });
       navigate("/dashboard");
     } catch (error) {
-      toast({
-        title: "Update failed",
-        description: "Something went wrong while updating the note.",
-        variant: "destructive",
-      });
+      toast(<p>Failed to update note</p>);
     } finally {
       setIsSubmitting(false);
     }
@@ -97,94 +154,136 @@ const EditNote = () => {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
-            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-8 w-64 bg-gray-200 rounded-lg" />
           </div>
           <div className="space-y-6">
-            <Skeleton className="h-36 w-full rounded-md" />
-            <Skeleton className="h-40 w-full rounded-md" />
-            <Skeleton className="h-96 w-full rounded-md" />
+            <Skeleton className="h-36 w-full bg-gray-200 rounded-xl" />
+            <Skeleton className="h-40 w-full bg-gray-200 rounded-xl" />
+            <Skeleton className="h-96 w-full bg-gray-200 rounded-xl" />
             <div className="flex justify-end space-x-4">
-              <Skeleton className="h-10 w-24 rounded-md" />
-              <Skeleton className="h-10 w-32 rounded-md" />
+              <Skeleton className="h-10 w-24 bg-gray-200 rounded-lg" />
+              <Skeleton className="h-10 w-32 bg-gray-200 rounded-lg" />
             </div>
           </div>
         </div>
-        <VoiceAssistant context="edit-note" />
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
-            <h1 className="text-3xl font-bold text-gray-900">Edit Note</h1>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              Edit Note
+            </h1>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Note Details</CardTitle>
+        <div className="space-y-8">
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+              <CardTitle className="text-gray-800 font-semibold">
+                Note Details
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
+            <CardContent className="space-y-6 p-6">
+              <div className="space-y-3">
+                <Label htmlFor="title" className="text-gray-700 font-medium">
+                  Title <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="title"
                   placeholder="Enter note title..."
                   value={formData.title}
                   onChange={(e) => handleChange("title", e.target.value)}
-                  className="text-lg font-medium"
+                  className="text-lg font-medium border-gray-200 focus:border-blue-400 focus:ring-blue-400/20 rounded-lg h-12"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="synopsis">Synopsis</Label>
+              <div className="space-y-3">
+                <Label htmlFor="synopsis" className="text-gray-700 font-medium">
+                  Synopsis
+                </Label>
                 <Textarea
                   id="synopsis"
                   placeholder="Brief description of your note..."
                   value={formData.synopsis}
                   onChange={(e) => handleChange("synopsis", e.target.value)}
                   rows={3}
+                  className="border-gray-200 focus:border-blue-400 focus:ring-blue-400/20 rounded-lg resize-none"
                 />
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                 <ModernSwitch
                   id="isPublic"
                   checked={formData.isPublic}
-                  onCheckedChange={(checked) => handleChange("isPublic", checked)}
+                  onCheckedChange={(checked) =>
+                    handleChange("isPublic", checked)
+                  }
                 />
-                <Label htmlFor="isPublic" className="font-medium">
+                <Label htmlFor="isPublic" className="font-medium text-gray-700">
                   Make this note public
                 </Label>
               </div>
             </CardContent>
           </Card>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <Label className="text-base font-medium">Content</Label>
+              <Label className="text-xl font-semibold text-gray-800">
+                Content
+              </Label>
               <div className="flex space-x-3">
+                <Button
+                  onClick={handleUndo}
+                  disabled={undoStack.length === 0}
+                  variant="outline"
+                  className="border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 rounded-lg px-4 py-2 font-medium transition-all duration-200 disabled:opacity-50"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Undo
+                </Button>
+
+                <Button
+                  onClick={handleRewriteWithAI}
+                  disabled={isRewritingAI || !formData.title.trim()}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg rounded-lg px-6 py-2 font-medium transition-all duration-200 hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                >
+                  {isRewritingAI ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Rewriting...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="h-4 w-4 mr-2" />
+                      Rewrite with AI
+                    </>
+                  )}
+                </Button>
+
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => navigate("/dashboard")}
+                  className="border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 rounded-lg px-4 py-2 font-medium transition-all duration-200"
                 >
                   Cancel
                 </Button>
+
                 <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="bg-orange-500 hover:bg-orange-600"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg rounded-lg px-6 py-2 font-medium transition-all duration-200 hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Updating...
                     </>
                   ) : (
@@ -196,10 +295,10 @@ const EditNote = () => {
                 </Button>
               </div>
             </div>
-            
-            <div className="min-h-[400px]">
+
+            <div className="min-h-[400px] bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
               <WordLikeEditor
-                key={formData.content}
+                key={`${formData.content}-${formData.synopsis}`}
                 value={formData.content}
                 onChange={(value) => handleChange("content", value)}
               />
@@ -207,7 +306,6 @@ const EditNote = () => {
           </div>
         </div>
       </div>
-      <VoiceAssistant context="edit-note" />
     </DashboardLayout>
   );
 };
