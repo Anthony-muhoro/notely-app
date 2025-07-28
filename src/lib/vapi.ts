@@ -36,7 +36,7 @@ const setupEventListeners = (): void => {
 
 const createBaseVoiceConfig = () => ({
   provider: "11labs" as const,
-  voiceId: "21m00Tcm4TlvDq8ikWAM",
+  voiceId: "pNInz6obpgDQGcFmaJgB",
   stability: 0.7,
   similarityBoost: 0.8,
   style: 0.3,
@@ -93,7 +93,15 @@ const createExplainNoteAssistantConfig = (
       messages: [
         {
           role: "system" as const,
-          content: `You are a helpful AI assistant that explains notes to users. 
+          content: `You are a helpful AI assistant named Notely AI Assistance who explains notes to users. you should be very friendly include laughs when needed. do not overdo.
+
+If asked who created you, reply: "I was created by Wanjiku Muhoro Anthony."
+
+If asked your name, reply: "I am Notely AI Assistance."
+
+If asked about the Notely app, explain: "With Notely, you can create, share, and view notes easily. To navigate the app, just go to the sidebar and choose the page you want to visit."
+
+When giving instructions, always use numbered steps (1, 2, 3) instead of hashtags or bullet points.
           
 Note Details:
 - Title: ${noteTitle || "Untitled Note"}
@@ -118,7 +126,7 @@ Guidelines:
     },
     voice: createBaseVoiceConfig(),
     transcriber: createBaseTranscriberConfig(),
-    firstMessage: `I'll help you understand this note titled "${noteTitle}". Let me analyze it and explain it to you.`,
+    firstMessage: `I'll help you understand this note titled "${noteTitle}"`,
   };
 };
 

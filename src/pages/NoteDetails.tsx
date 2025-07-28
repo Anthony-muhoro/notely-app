@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowLeft,
-  Edit3,
   Trash2,
   Pin,
   Bookmark,
@@ -54,6 +53,7 @@ const NoteDetails = () => {
     queryKey: ["note", id],
     queryFn: async () => {
       const response = await ApiClient.get(`/notes/${id}`);
+      console.log(response.data);
       return response.data.data;
     },
     enabled: !!id,
@@ -241,14 +241,14 @@ const NoteDetails = () => {
 
             <div className="flex items-center space-x-4 mb-6">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={note.author?.avatar} alt="Author" />
+                <AvatarImage src={note.user?.avatar} alt="Author" />
                 <AvatarFallback className="bg-orange-100 text-orange-700">
                   <User className="h-5 w-5" />
                 </AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-medium text-gray-900">
-                  {note.author?.name || "Anonymous"}
+                  {note.user?.firstName || "You"}
                 </p>
                 <p className="text-sm text-gray-600">Author</p>
               </div>
@@ -284,13 +284,13 @@ const NoteDetails = () => {
           />
         </div>
       </div>
-      <VoiceAssistant 
+      <VoiceAssistant
         assistantType="explain"
         noteData={{
           title: note.title,
           content: note.content,
           dateCreated: note.dateCreated,
-          lastUpdated: note.lastUpdated
+          lastUpdated: note.lastUpdated,
         }}
       />
     </DashboardLayout>
