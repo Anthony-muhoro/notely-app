@@ -32,7 +32,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { NoteDetailsSkeleton } from "@/components/ui/note-details-skeleton";
-import { useStore } from "@/store/useStore";
 import VoiceAssistant from "@/components/voice/VoiceAssistant";
 import { useAuth } from "@/store/useAuth";
 import { toast } from "sonner";

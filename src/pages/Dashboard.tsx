@@ -11,10 +11,11 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { NoteCardSkeleton } from "@/components/ui/note-card-skeleton";
 import VoiceAssistant from "@/components/voice/VoiceAssistant";
 import { useAuth } from "@/store/useAuth";
-const { user } = useAuth();
+
 const Dashboard = () => {
   useScrollToTop();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const {
     data: notes = [],
