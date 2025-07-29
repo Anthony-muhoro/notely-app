@@ -9,7 +9,9 @@ import ApiClient from "@/lib/api";
 import { NoteCard } from "@/components/dashboard/NoteCard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { NoteCardSkeleton } from "@/components/ui/note-card-skeleton";
-
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
+import { useAuth } from "@/store/useAuth";
+const { user } = useAuth();
 const Dashboard = () => {
   useScrollToTop();
   const navigate = useNavigate();
@@ -141,6 +143,7 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+      <VoiceAssistant assistantType="default" />
     </DashboardLayout>
   );
 };

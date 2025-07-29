@@ -25,7 +25,6 @@ interface VoiceAssistantProps {
 }
 
 const VoiceAssistant = ({
-  context,
   assistantType = "default",
   noteData,
 }: VoiceAssistantProps) => {
@@ -140,13 +139,15 @@ const VoiceAssistant = ({
           noteData.dateCreated,
           noteData.lastUpdated
         );
-        
+
         if (!success) {
           console.error("Failed to start explain note call");
           // Optionally show error to user
         }
       } else {
-        const success = await startVapiCall(context);
+        const success = await startVapiCall({
+          firstName: user?.firstName || "User",
+        });
         if (!success) {
           console.error("Failed to start Vapi call");
           // Optionally show error to user

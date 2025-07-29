@@ -36,7 +36,7 @@ const setupEventListeners = (): void => {
 
 const createBaseVoiceConfig = () => ({
   provider: "11labs" as const,
-  voiceId: "pNInz6obpgDQGcFmaJgB",
+  voiceId: "cgSgspJ2msm6clMCkdW9",
   stability: 0.7,
   similarityBoost: 0.8,
   style: 0.3,
@@ -47,8 +47,10 @@ const createBaseTranscriberConfig = () => ({
   model: "nova-2",
   language: "en-US" as const,
 });
+const userOtherInquery = `
+Be conversational, warm, and helpful. Keep responses concise and natural. If the user asks how to create a new note, respond: To create a new note, go to the sidebar and click on the New Entry option. You will be redirected to the note creation page where you'll see a form. Fill in the Title, Synopsis, and Content fields to write your note. To use AI assistance with the note, you must provide a title. You can easily rewrite the content of your note using AI help. If the user asks how to view notes, respond: To view notes you've created, go to the sidebar and click on My Notes. To see pinned notes, check the sidebar under Pinned. Bookmarked notes can be found under the Bookmarks section in the sidebar. To manage deleted notes, go to the Trash page from the sidebar. From the Trash page, you can restore notes by clicking the restore button. If the user asks about the Notely app, respond: Notely lets you create, save, and share notes on the public page. To visit the public page, use the sidebar and navigate there. You can pin and unpin notes for easy access. To update your profile (profile image, first name, last name), go to the Profile page. To change your password, visit the Change Password page. If the user asks who created you, respond: I was created by a dedicated engineer named Anthony Muhoro. If the user asks to tell more about the engineer, respond: He is a hardworking young man obsessed with tech. Always end with: Would you like me to help you with any of these features?`;
 
-const createDefaultAssistantConfig = (context?: string) => ({
+const createDefaultAssistantConfig = (user: { firstName: string }) => ({
   model: {
     provider: "openai" as const,
     model: "gpt-4" as const,
@@ -57,15 +59,15 @@ const createDefaultAssistantConfig = (context?: string) => ({
         role: "system" as const,
         content: `You are Notely, a friendly voice assistant for a note-taking app.
         
-Context: ${context || "User is ready for assistance"}
-
-Be conversational, warm, and helpful. Keep responses concise and natural.`,
+Context: ${"User is ready for assistance"}
+${userOtherInquery}
+`,
       },
     ],
   },
   voice: createBaseVoiceConfig(),
   transcriber: createBaseTranscriberConfig(),
-  firstMessage: `Hi! I'm Notely, your voice assistant. How can I help you today?`,
+  firstMessage: `Hi! ${user.firstName}I'm Notely, your voice assistant. How can I help you today?`,
 });
 
 const createExplainNoteAssistantConfig = (
@@ -126,7 +128,7 @@ Guidelines:
     },
     voice: createBaseVoiceConfig(),
     transcriber: createBaseTranscriberConfig(),
-    firstMessage: `I'll help you understand this note titled "${noteTitle}"`,
+    firstMessage: `Hi! ${user.firstName} . I can see that you have opened a note with the title, ${noteTitle}. so tell me. what help can I offer to you?`,
   };
 };
 
@@ -168,7 +170,10 @@ export const initializeVapi = (): boolean => {
   }
 };
 
-export const startVapiCall = async (context?: string): Promise<boolean> => {
+// Fixed function - changed parameter type and usage
+export const startVapiCall = async (user: {
+  firstName: string;
+}): Promise<boolean> => {
   if (!vapi || !isInitialized) {
     console.error("Vapi not initialized. Call initializeVapi() first.");
     return false;
@@ -182,7 +187,7 @@ export const startVapiCall = async (context?: string): Promise<boolean> => {
   }
 
   try {
-    const assistant = createDefaultAssistantConfig(context);
+    const assistant = createDefaultAssistantConfig(user);
     await vapi.start(assistant);
     currentAssistantType = "default";
     return true;

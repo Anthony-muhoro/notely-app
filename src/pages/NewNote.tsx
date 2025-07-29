@@ -14,6 +14,7 @@ import WordLikeEditor from "@/components/editor/WordLikeEditor";
 import { useStore } from "@/store/useStore";
 import { useMutation } from "@tanstack/react-query";
 import ApiClient from "@/lib/api";
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
 
 interface FormData {
   title: string;
@@ -379,6 +380,8 @@ const NewNote = () => {
           </div>
         </div>
       </div>
+      <VoiceAssistant assistantType="default" />
+      <Button>Tt</Button>
     </DashboardLayout>
   );
 };

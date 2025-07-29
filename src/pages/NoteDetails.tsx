@@ -14,7 +14,6 @@ import {
   User,
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
