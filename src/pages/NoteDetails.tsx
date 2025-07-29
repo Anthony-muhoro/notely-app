@@ -36,14 +36,13 @@ import { NoteDetailsSkeleton } from "@/components/ui/note-details-skeleton";
 import { useStore } from "@/store/useStore";
 import VoiceAssistant from "@/components/voice/VoiceAssistant";
 import { useAuth } from "@/store/useAuth";
+import { toast } from "sonner";
 
 const NoteDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { pinNote, unpinNote, bookmarkNote, unbookmarkNote } = useStore();
-  const [isPinned, setIsPinned] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isBookmarked, setisBookmarked] = useState(false);
+  const [isPinned, setisPinned] = useState(false);
   const { user } = useAuth();
   const {
     data: note,
@@ -52,63 +51,38 @@ const NoteDetails = () => {
   } = useQuery({
     queryKey: ["note", id],
     queryFn: async () => {
-      const response = await ApiClient.get(`/notes/${id}`);
-      console.log(response.data);
+      const response = await ApiClient.get(`/notes/fullnote/${id}`);
+
       return response.data.data;
     },
     enabled: !!id,
   });
 
-  const handlePin = () => {
-    const newPinnedState = !isPinned;
-    setIsPinned(newPinnedState);
-
-    if (newPinnedState) {
-      pinNote(id!);
-    } else {
-      unpinNote(id!);
+  const handlePin = async () => {
+    try {
+      const response = await ApiClient.patch(`/notes/pin/${id}`);
+      toast(<p>{response?.data.message}</p>);
+    } catch (error: any) {
+      toast(<p>something went wrong</p>);
     }
-
-    toast({
-      title: newPinnedState ? "Note pinned" : "Note unpinned",
-      description: newPinnedState
-        ? "Note added to pinned items."
-        : "Note removed from pinned items.",
-    });
   };
 
-  const handleBookmark = () => {
-    const newBookmarkState = !isBookmarked;
-    setIsBookmarked(newBookmarkState);
-
-    if (newBookmarkState) {
-      bookmarkNote(id!);
-    } else {
-      unbookmarkNote(id!);
+  const handleBookmark = async () => {
+    try {
+      const response = await ApiClient.patch(`/notes/bookmark/${id}`);
+      toast(<p>{response?.data.message}</p>);
+    } catch (error: any) {
+      toast(<p>something went wrong</p>);
     }
-
-    toast({
-      title: newBookmarkState ? "Note bookmarked" : "Bookmark removed",
-      description: newBookmarkState
-        ? "Note added to bookmarks."
-        : "Note removed from bookmarks.",
-    });
   };
 
   const handleDelete = async () => {
     try {
       await ApiClient.delete(`/notes/${id}`);
-      toast({
-        title: "Note deleted",
-        description: "Note has been moved to trash.",
-      });
+      toast(<p>note deleted</p>);
       navigate("/dashboard");
     } catch {
-      toast({
-        title: "Failed to delete",
-        description: "Something went wrong deleting the note.",
-        variant: "destructive",
-      });
+      toast(<p>something went wrong</p>);
     }
   };
 
