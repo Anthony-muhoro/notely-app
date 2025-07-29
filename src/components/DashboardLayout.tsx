@@ -27,6 +27,7 @@ import {
   Menu,
   Globe,
   LockKeyhole,
+  User2,
 } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -58,6 +59,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: "Bookmarked", href: "/bookmarks", icon: Bookmark },
     { name: "Trash", href: "/trash", icon: Trash2 },
     { name: "Public Notes", href: "/public", icon: Globe },
+    { name: "Profile", href: "/profile", icon: User2 },
   ];
 
   const handleLogout = async () => {

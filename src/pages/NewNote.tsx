@@ -381,7 +381,6 @@ const NewNote = () => {
         </div>
       </div>
       <VoiceAssistant assistantType="default" />
-      <Button>Tt</Button>
     </DashboardLayout>
   );
 };

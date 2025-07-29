@@ -21,6 +21,7 @@ import TrashPage from "./pages/TrashPage";
 import PublicNotes from "./pages/PublicNotes";
 import NotFound from "./pages/NotFound";
 import ChangePassword from "@/pages/ChangePassword.tsx";
+import VoiceAssistant from "./components/voice/VoiceAssistant";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
       <Toaster />
       <Sonner position="top-center" />
       <BrowserRouter>
+        <VoiceAssistant assistantType="default" />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />

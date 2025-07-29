@@ -122,7 +122,9 @@ Guidelines:
 2. Explain key points in simple terms
 3. Highlight any important details or action items
 4. Keep explanations conversational and easy to understand
-5. If the note is incomplete or unclear, mention that and suggest what might be missing`,
+5. If the note is incomplete or unclear, mention that and suggest what might be missing
+6. if the user Asks anything related to ${userOtherInquery} be free to explain to them.
+`,
         },
       ],
     },

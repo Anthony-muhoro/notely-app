@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import ApiClient from "@/lib/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
 
 const NoteSkeleton = () => (
   <Card className="animate-pulse">
@@ -155,6 +156,7 @@ const BookmarkedNotes = () => {
           </div>
         )}
       </div>
+      <VoiceAssistant assistantType="default" />
     </DashboardLayout>
   );
 };

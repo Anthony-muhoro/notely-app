@@ -1,4 +1,3 @@
-
 import { Trash2 } from "lucide-react";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -66,9 +65,7 @@ const TrashPage = () => {
               <Trash2 className="h-8 w-8 text-orange-500 mr-3" />
               Trash
             </h1>
-            <p className="text-gray-600 mt-2">
-              Manage your deleted notes
-            </p>
+            <p className="text-gray-600 mt-2">Manage your deleted notes</p>
           </div>
         </div>
 
@@ -91,7 +88,7 @@ const TrashPage = () => {
           <EmptyTrash />
         )}
       </div>
-      <VoiceAssistant />
+      <VoiceAssistant assistantType="default" />
     </DashboardLayout>
   );
 };

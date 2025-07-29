@@ -43,13 +43,6 @@ const VoiceAssistant = ({
         console.error("Failed to initialize Vapi");
       }
     }
-
-    // Clean up on unmount
-    return () => {
-      if (isCallActive()) {
-        stopVapiCall().catch(console.error);
-      }
-    };
   }, []);
 
   useEffect(() => {

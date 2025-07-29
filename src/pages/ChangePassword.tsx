@@ -15,6 +15,7 @@ import DashboardLayout from "@/components/DashboardLayout.tsx";
 import { useMutation } from "@tanstack/react-query";
 import ApiClient from "@/lib/api";
 import { toast } from "sonner";
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
 
 const ChangePassword = () => {
   const [passwordData, setPasswordData] = useState({
@@ -216,6 +217,7 @@ const ChangePassword = () => {
           </CardContent>
         </Card>
       </div>
+      <VoiceAssistant assistantType="default" />
     </DashboardLayout>
   );
 };

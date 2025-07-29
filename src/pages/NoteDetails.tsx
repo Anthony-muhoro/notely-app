@@ -35,13 +35,17 @@ import { NoteDetailsSkeleton } from "@/components/ui/note-details-skeleton";
 import VoiceAssistant from "@/components/voice/VoiceAssistant";
 import { useAuth } from "@/store/useAuth";
 import { toast } from "sonner";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 
 const NoteDetails = () => {
+  useScrollToTop();
   const { id } = useParams();
   const navigate = useNavigate();
   const [isBookmarked, setisBookmarked] = useState(false);
   const [isPinned, setisPinned] = useState(false);
   const { user } = useAuth();
+  const userid = user.id;
+  console.log(userid);
   const {
     data: note,
     isLoading,
@@ -55,7 +59,13 @@ const NoteDetails = () => {
     },
     enabled: !!id,
   });
-
+  const noteuserId = note?.user?.id;
+  console.log("user id", noteuserId);
+  if (noteuserId == userid) {
+    console.log("ids matches");
+  } else {
+    console.log("not match");
+  }
   const handlePin = async () => {
     try {
       const response = await ApiClient.patch(`/notes/pin/${id}`);
@@ -121,60 +131,64 @@ const NoteDetails = () => {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-end mb-8">
-          <div className="flex items-center space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handlePin}>
-                  <Pin className="mr-2 h-4 w-4" />
-                  {isPinned ? "Unpin" : "Pin"} note
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleBookmark}>
-                  <Bookmark className="mr-2 h-4 w-4" />
-                  {isBookmarked ? "Remove bookmark" : "Bookmark"}
-                </DropdownMenuItem>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600"
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete note
-                    </DropdownMenuItem>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-white border border-gray-200 shadow-lg">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="text-gray-900">
-                        Delete note?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription className="text-gray-600">
-                        This will move the note to trash. You can restore it
-                        later if needed.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-900 border-gray-300">
-                        Cancel
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDelete}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+        {userid == noteuserId ? (
+          <div className="flex items-center justify-end mb-8">
+            <div className="flex items-center space-x-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handlePin}>
+                    <Pin className="mr-2 h-4 w-4" />
+                    {isPinned ? "Unpin" : "Pin"} note
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleBookmark}>
+                    <Bookmark className="mr-2 h-4 w-4" />
+                    {isBookmarked ? "Remove bookmark" : "Bookmark"}
+                  </DropdownMenuItem>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600"
+                        onSelect={(e) => e.preventDefault()}
                       >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete note
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-white border border-gray-200 shadow-lg">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-gray-900">
+                          Delete note?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-600">
+                          This will move the note to trash. You can restore it
+                          later if needed.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-900 border-gray-300">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-        </div>
+        ) : (
+          <></>
+        )}
 
         <div className="bg-white rounded-lg shadow-lg border-0 p-8">
           <div className="mb-8">

@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import ApiClient from "@/lib/api";
 import { Separator } from "@/components/ui/separator";
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
 
 type Note = {
   id: string;
@@ -258,7 +259,7 @@ const PublicNotes = () => {
                           )}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {formatDate(note.dateCreated)}
+                          {new Date(note.dateCreated).toLocaleString()}
                         </p>
                       </div>
                     </div>
@@ -307,6 +308,7 @@ const PublicNotes = () => {
           </>
         )}
       </div>
+      <VoiceAssistant assistantType="default" />
     </DashboardLayout>
   );
 };
