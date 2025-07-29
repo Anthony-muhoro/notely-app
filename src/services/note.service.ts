@@ -291,7 +291,6 @@ just give the only one result. no explanations or suggestion ,just rewrite well.
   static async deleteNote(noteId: string, userId: string) {
     const note = await prisma.note.findFirst({
       where: { id: noteId, creatorId: userId, isDeleted: false },
-      include: { images: true },
     });
 
     if (!note) {
@@ -300,19 +299,6 @@ just give the only one result. no explanations or suggestion ,just rewrite well.
         "Note not found or you do not have permission to delete it"
       );
     }
-
-    // Delete images from ImageKit
-    if (note.images.length > 0) {
-      const deletePromises = note.images.map(async (image) => {
-        try {
-          await imagekit.deleteFile(image.imageId);
-        } catch (error) {
-          console.error("Error deleting image from ImageKit:", error);
-        }
-      });
-      await Promise.all(deletePromises);
-    }
-
     // Soft delete the note
     await prisma.note.update({
       where: { id: noteId },
@@ -321,16 +307,94 @@ just give the only one result. no explanations or suggestion ,just rewrite well.
 
     return { message: "Note deleted successfully" };
   }
+  static async pinNote(noteId: string, userId: string) {
+    const note = await prisma.note.findFirst({
+      where: { id: noteId, creatorId: userId, isDeleted: false },
+    });
+
+    if (!note) {
+      throw new ApiError(
+        404,
+        "Note not found or you do not have permission to delete it"
+      );
+    }
+    // Soft delete the note
+    await prisma.note.update({
+      where: { id: noteId },
+      data: { isPinned: true },
+    });
+
+    return { message: "Note pinned successfully" };
+  }
+  static async unPinNote(noteId: string, userId: string) {
+    const note = await prisma.note.findFirst({
+      where: {
+        id: noteId,
+        creatorId: userId,
+        isDeleted: false,
+        isPinned: true,
+      },
+    });
+
+    if (!note) {
+      throw new ApiError(
+        404,
+        "Note not found or you do not have permission to delete it"
+      );
+    }
+    await prisma.note.update({
+      where: { id: noteId },
+      data: { isPinned: false },
+    });
+
+    return { message: "Note unpinned successfully" };
+  }
+  static async BoomarkNote(noteId: string, userId: string) {
+    const note = await prisma.note.findFirst({
+      where: { id: noteId, creatorId: userId, isDeleted: false },
+    });
+
+    if (!note) {
+      throw new ApiError(
+        404,
+        "Note not found or you do not have permission to delete it"
+      );
+    }
+    await prisma.note.update({
+      where: { id: noteId },
+      data: { isBookmarked: true },
+    });
+
+    return { message: "Note added to bookmarks" };
+  }
+  static async remveNoteBookmark(noteId: string, userId: string) {
+    const note = await prisma.note.findFirst({
+      where: {
+        id: noteId,
+        creatorId: userId,
+        isDeleted: false,
+        isBookmarked: true,
+      },
+    });
+
+    if (!note) {
+      throw new ApiError(
+        404,
+        "Note not found or you do not have permission to delete it"
+      );
+    }
+    await prisma.note.update({
+      where: { id: noteId },
+      data: { isBookmarked: false },
+    });
+
+    return { message: "Note removed from bookmarks" };
+  }
   static async getUserDeletedNotes(userId: string) {
     const deletedNotes = await prisma.note.findMany({
       where: {
         creatorId: userId,
         isDeleted: true,
-      },
-      include: {
-        images: {
-          orderBy: { order: "asc" },
-        },
       },
       orderBy: {
         lastUpdated: "desc",
@@ -343,6 +407,46 @@ just give the only one result. no explanations or suggestion ,just rewrite well.
         ? "Deleted notes retrieved successfully"
         : "No deleted notes found",
       notes: deletedNotes,
+    };
+  }
+  static async getUserpinneddNotes(userId: string) {
+    const pinnedNotes = await prisma.note.findMany({
+      where: {
+        creatorId: userId,
+        isDeleted: false,
+        isPinned: true,
+      },
+      orderBy: {
+        lastUpdated: "desc",
+      },
+    });
+
+    return {
+      success: true,
+      message: pinnedNotes.length
+        ? "pinned notes retrieved successfully"
+        : "No pinned notes found",
+      notes: pinnedNotes,
+    };
+  }
+  static async getUserBokmarkeddNotes(userId: string) {
+    const pinnedNotes = await prisma.note.findMany({
+      where: {
+        creatorId: userId,
+        isDeleted: false,
+        isBookmarked: true,
+      },
+      orderBy: {
+        lastUpdated: "desc",
+      },
+    });
+
+    return {
+      success: true,
+      message: pinnedNotes.length
+        ? "pinned notes retrieved successfully"
+        : "No pinned notes found",
+      notes: pinnedNotes,
     };
   }
 
@@ -365,97 +469,6 @@ just give the only one result. no explanations or suggestion ,just rewrite well.
       message: "Note restored successfully",
       data: restoredNote,
     };
-  }
-
-  static async addImagesToNote(
-    noteId: string,
-    userId: string,
-    images: Express.Multer.File[]
-  ) {
-    const note = await prisma.note.findFirst({
-      where: { id: noteId, creatorId: userId, isDeleted: false },
-      include: { images: true },
-    });
-
-    if (!note) {
-      throw new ApiError(
-        404,
-        "Note not found or you do not have permission to modify it"
-      );
-    }
-
-    const currentImageCount = note.images.length;
-    if (currentImageCount + images.length > 10) {
-      throw new ApiError(
-        400,
-        `Cannot add ${images.length} images. Maximum 10 images allowed per note.`
-      );
-    }
-
-    const imagePromises = images.map(async (image, index) => {
-      try {
-        const result = await imagekit.upload({
-          file: image.buffer,
-          fileName: `note_${noteId}_${currentImageCount + index}_${Date.now()}`,
-          folder: "/notes",
-        });
-
-        return prisma.noteImage.create({
-          data: {
-            noteId,
-            imageUrl: result.url,
-            imageId: result.fileId,
-            alt: `Note image ${currentImageCount + index + 1}`,
-            order: currentImageCount + index,
-          },
-        });
-      } catch (error) {
-        console.error("Error uploading image:", error);
-        return null;
-      }
-    });
-
-    const uploadedImages = await Promise.all(imagePromises);
-    const successfulUploads = uploadedImages.filter((img) => img !== null);
-
-    return successfulUploads;
-  }
-
-  static async removeImageFromNote(
-    noteId: string,
-    imageId: string,
-    userId: string
-  ) {
-    const note = await prisma.note.findFirst({
-      where: { id: noteId, creatorId: userId, isDeleted: false },
-    });
-
-    if (!note) {
-      throw new ApiError(
-        404,
-        "Note not found or you do not have permission to modify it"
-      );
-    }
-
-    const image = await prisma.noteImage.findFirst({
-      where: { id: imageId, noteId },
-    });
-
-    if (!image) {
-      throw new ApiError(404, "Image not found");
-    }
-
-    try {
-      await imagekit.deleteFile(image.imageId);
-    } catch (error) {
-      console.error("Error deleting image from ImageKit:", error);
-    }
-
-    await prisma.noteImage.delete({
-      where: { id: imageId },
-    });
-
-    return { message: "Image removed successfully" };
   }
 
   static async getPublicNotes(userId: string) {

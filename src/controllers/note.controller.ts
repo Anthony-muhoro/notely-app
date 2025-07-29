@@ -103,9 +103,66 @@ export class NoteController {
         .json(new ApiResponse(200, result, "Note deleted successfully"));
     }
   );
+  static pinNote = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const { id } = req.params;
+      const result = await NoteService.pinNote(id, req.user!.id);
+
+      res.status(200).json(new ApiResponse(200, result, "Note pinned"));
+    }
+  );
+  static unpinNote = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const { id } = req.params;
+      const result = await NoteService.unPinNote(id, req.user!.id);
+
+      res.status(200).json(new ApiResponse(200, result, "Note unpinned"));
+    }
+  );
+  static bookmarkNote = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const { id } = req.params;
+      const result = await NoteService.BoomarkNote(id, req.user!.id);
+
+      res
+        .status(200)
+        .json(new ApiResponse(200, result, "Note added to bookmark"));
+    }
+  );
+  static unbookmarkNote = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const { id } = req.params;
+      const result = await NoteService.remveNoteBookmark(id, req.user!.id);
+
+      res
+        .status(200)
+        .json(new ApiResponse(200, result, "Note removed from bookmarks"));
+    }
+  );
+
   static getDeletedNotes = asyncHandler(
     async (req: AuthenticatedRequest, res: Response) => {
       const result = await NoteService.getUserDeletedNotes(req.user!.id);
+
+      return res.status(200).json({
+        message: result.message,
+        notes: result.notes,
+      });
+    }
+  );
+  static getPinnedNotes = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const result = await NoteService.getUserpinneddNotes(req.user!.id);
+
+      return res.status(200).json({
+        message: result.message,
+        notes: result.notes,
+      });
+    }
+  );
+  static getBookmappedNotes = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const result = await NoteService.getUserBokmarkeddNotes(req.user!.id);
 
       return res.status(200).json({
         message: result.message,
@@ -127,43 +184,6 @@ export class NoteController {
         message: result.message,
         note: result.data,
       });
-    }
-  );
-
-  static addImages = asyncHandler(async (req: NoteRequest, res: Response) => {
-    const { id } = req.params;
-
-    const normalizedFiles = (
-      Array.isArray(req.files)
-        ? req.files
-        : req.files
-        ? Object.values(req.files).flat()
-        : []
-    ) as Express.Multer.File[];
-
-    const images = await NoteService.addImagesToNote(
-      id,
-      req.user!.id,
-      normalizedFiles
-    );
-
-    res
-      .status(200)
-      .json(new ApiResponse(200, images, "Images added successfully"));
-  });
-
-  static removeImage = asyncHandler(
-    async (req: AuthenticatedRequest, res: Response) => {
-      const { id, imageId } = req.params;
-      const result = await NoteService.removeImageFromNote(
-        id,
-        imageId,
-        req.user!.id
-      );
-
-      res
-        .status(200)
-        .json(new ApiResponse(200, result, "Image removed successfully"));
     }
   );
 

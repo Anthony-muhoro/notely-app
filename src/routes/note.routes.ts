@@ -23,7 +23,7 @@ NotesRouter.get(
 NotesRouter.get("/public", NoteController.getPublicNotes);
 NotesRouter.get("/", validate(getNotesSchema), NoteController.getUserNotes);
 NotesRouter.get("/deleted-notes", protect, NoteController.getDeletedNotes);
-NotesRouter.get("/:id", NoteController.getNoteById);
+NotesRouter.get("/fullnote/:id", NoteController.getNoteById);
 NotesRouter.put("/:id/restore", protect, NoteController.restoreNote);
 NotesRouter.post(
   "/",
@@ -35,6 +35,10 @@ NotesRouter.post("/gemininote", protect, NoteController.createNotewithgemini);
 NotesRouter.post("/rewrite", protect, NoteController.rewriteContentWithGemini);
 NotesRouter.put("/:id", validate(updateNoteSchema), NoteController.updateNote);
 NotesRouter.delete("/:id", validate(getNoteSchema), NoteController.deleteNote);
-NotesRouter.post("/:id/images", uploadImages, NoteController.addImages);
-NotesRouter.delete("/:id/images/:imageId", NoteController.removeImage);
+NotesRouter.patch("/pin/:id", protect, NoteController.pinNote);
+NotesRouter.patch("/unpin/:id", protect, NoteController.unpinNote);
+NotesRouter.patch("/bookmark/:id", protect, NoteController.bookmarkNote);
+NotesRouter.patch("/unbookmark/:id", protect, NoteController.unbookmarkNote);
+NotesRouter.get("/pinned", protect, NoteController.getPinnedNotes);
+NotesRouter.get("/bookmarked", protect, NoteController.getBookmappedNotes);
 export default NotesRouter;
