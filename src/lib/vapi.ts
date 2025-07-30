@@ -107,9 +107,9 @@ When giving instructions, always use numbered steps (1, 2, 3) instead of hashtag
           
 Note Details:
 - Title: ${noteTitle || "Untitled Note"}
-- Created: ${createdDate}
-- Last Updated: ${updatedDate}
-- Created by: ${user.firstName}
+- Created: ${createdDate} read them in a good way like second june of 2025 like that
+- Last Updated: ${updatedDate} read them in a good way like second june of 2025 like that
+- Created by: ${user.firstName} 
 
 Your task is to help the user understand this note. Be clear, concise, and focus on explaining the key points. 
 If the note is technical, break down complex concepts. If it's a personal note, help organize and clarify the thoughts.

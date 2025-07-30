@@ -34,6 +34,7 @@ const EditNote = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRewritingAI, setIsRewritingAI] = useState(false);
   const [undoStack, setUndoStack] = useState<UndoState[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const {
     data: noteToEdit,
@@ -42,7 +43,7 @@ const EditNote = () => {
   } = useQuery({
     queryKey: ["get-a-note", id],
     queryFn: async () => {
-      const response = await ApiClient.get(`/notes/${id}`);
+      const response = await ApiClient.get(`/notes/fullnote/${id}`);
       return response.data.data;
     },
     enabled: !!id,
@@ -56,15 +57,16 @@ const EditNote = () => {
   });
 
   useEffect(() => {
-    if (noteToEdit) {
+    if (noteToEdit && !isDataLoaded) {
       setFormData({
-        title: noteToEdit.title,
-        synopsis: noteToEdit.synopsis,
-        content: noteToEdit.content,
-        isPublic: noteToEdit.isPublic,
+        title: noteToEdit.title || "",
+        synopsis: noteToEdit.synopsis || "",
+        content: noteToEdit.content || "",
+        isPublic: noteToEdit.isPublic || false,
       });
+      setIsDataLoaded(true);
     }
-  }, [noteToEdit]);
+  }, [noteToEdit, isDataLoaded]);
 
   const saveCurrentState = () => {
     const currentState: UndoState = {
@@ -85,6 +87,25 @@ const EditNote = () => {
     }));
 
     setUndoStack((prev) => prev.slice(0, -1));
+  };
+
+  const stripMarkdown = (text: string): string => {
+    return text
+      .replace(/#{1,6}\s+/g, "")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/__(.*?)__/g, "$1")
+      .replace(/_(.*?)_/g, "$1")
+      .replace(/~~(.*?)~~/g, "$1")
+      .replace(/`{3}[\s\S]*?`{3}/g, "")
+      .replace(/`(.*?)`/g, "$1")
+      .replace(/^\s*[-*+]\s+/gm, "")
+      .replace(/^\s*\d+\.\s+/gm, "")
+      .replace(/^\s*>\s+/gm, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
   };
 
   const handleRewriteWithAI = async () => {
@@ -113,8 +134,8 @@ const EditNote = () => {
 
       setFormData((prev) => ({
         ...prev,
-        synopsis: synopsis || prev.synopsis,
-        content: content || prev.content,
+        synopsis: synopsis ? stripMarkdown(synopsis) : prev.synopsis,
+        content: content ? stripMarkdown(content) : prev.content,
       }));
     } catch (error) {
       console.error("AI rewrite error:", error);
@@ -298,7 +319,6 @@ const EditNote = () => {
 
             <div className="min-h-[400px] bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
               <WordLikeEditor
-                key={`${formData.content}-${formData.synopsis}`}
                 value={formData.content}
                 onChange={(value) => handleChange("content", value)}
               />
