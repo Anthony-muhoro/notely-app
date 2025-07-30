@@ -31,7 +31,6 @@ const App = () => (
       <Toaster />
       <Sonner position="top-center" />
       <BrowserRouter>
-        <VoiceAssistant assistantType="default" />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
