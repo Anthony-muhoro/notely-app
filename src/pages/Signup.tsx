@@ -35,17 +35,17 @@ const Signup = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      if(confirmPassword !==password){
-        toast(<div className="max-w-sm w-full flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 text-red-800 rounded-md shadow">
-          <span className="text-xl">⚠️</span>
-          <div className="text-sm font-medium">
-            {passwords don't match}
-          </div>
-        </div>)
-        setLoading(false);
-      return
-      }
       const { confirmPassword, ...rest } = formData;
+       if (formData.password !== formData.confirmPassword) {
+        toast(
+          <div className="max-w-sm w-full flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 text-red-800 rounded-md shadow">
+            <span className="text-xl">⚠️</span>
+            <div className="text-sm font-medium">Passwords do not match</div>
+          </div>
+        );
+        setLoading(false);
+        return;
+      }
       const response = await ApiClient.post("/auth/register", { ...rest });
       toast.success("Account created successfuly . check your email to verify");
       console.log(response.data);
