@@ -94,6 +94,7 @@ const NoteDetails = () => {
     }
   };
 
+
   if (isLoading) {
     return (
       <DashboardLayout>

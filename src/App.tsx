@@ -21,6 +21,7 @@ import TrashPage from "./pages/TrashPage";
 import PublicNotes from "./pages/PublicNotes";
 import NotFound from "./pages/NotFound";
 import ChangePassword from "@/pages/ChangePassword.tsx";
+import PDFChat from "./pages/PDFChat";
 import VoiceAssistant from "./components/voice/VoiceAssistant";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,8 @@ const App = () => (
           <Route path="/bookmarks" element={<BookmarkedNotes />} />
           <Route path="/trash" element={<TrashPage />} />
           <Route path="/public" element={<PublicNotes />} />
+          <Route path="/pdf-chat" element={<PDFChat />} />
+          <Route path="/pdf-chat/:id" element={<PDFChat />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

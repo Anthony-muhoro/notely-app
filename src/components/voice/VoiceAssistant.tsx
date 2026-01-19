@@ -2,31 +2,42 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bot, PhoneOff, Volume2, Sparkles, Zap } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   initializeVapi,
   startVapiCall,
   startExplainNoteCall,
+  startPdfCall,
   stopVapiCall,
   getVapiInstance,
   isCallActive,
   isVapiInitialized,
+  getCurrentAssistantType,
 } from "@/lib/vapi";
 import { useAuth } from "@/store/useAuth";
 
 interface VoiceAssistantProps {
   context?: string;
-  assistantType?: "default" | "explain";
+  assistantType?: "default" | "explain" | "pdf";
   noteData?: {
     title: string;
     content: string;
     dateCreated: string;
     lastUpdated: string;
   };
+  pdfData?: {
+    fileName: string;
+    content: string;
+    pageCount: number;
+    imageUrls?: string[];
+    imageAnalysis?: string | null;
+  };
 }
 
 const VoiceAssistant = ({
   assistantType = "default",
   noteData,
+  pdfData,
 }: VoiceAssistantProps) => {
   const [isCallActiveState, setIsCallActiveState] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -34,6 +45,8 @@ const VoiceAssistant = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Only initialize if not already initialized
@@ -81,17 +94,50 @@ const VoiceAssistant = ({
       setIsSpeaking(false);
     };
 
+    // Handle tool-calls for navigation
+    const handleMessage = (message: any) => {
+      if (message.type === "tool-calls" && message.toolCalls) {
+        message.toolCalls.forEach((toolCall: any) => {
+          if (toolCall.function?.name === "navigate") {
+            try {
+              const args = typeof toolCall.function.arguments === "string"
+                ? JSON.parse(toolCall.function.arguments)
+                : toolCall.function.arguments;
+              
+              const path = args?.path;
+              if (path && typeof path === "string") {
+                console.log("Navigating to:", path);
+                // Navigate smoothly without interrupting the call
+                navigate(path);
+                // Update context for new page after a short delay
+                setTimeout(() => {
+                  if (isCallActive() && getCurrentAssistantType() === "default") {
+                    // Call is still active, just navigate - don't restart
+                    vapi.say(`Navigating to ${path === "/dashboard" ? "my notes" : path.replace("/", "").replace("-", " ")}`);
+                  }
+                }, 100);
+              }
+            } catch (error) {
+              console.error("Error parsing navigation arguments:", error);
+            }
+          }
+        });
+      }
+    };
+
     // Remove any existing listeners first
     vapi.off("call-start", handleCallStart);
     vapi.off("call-end", handleCallEnd);
     vapi.off("speech-start", handleSpeechStart);
     vapi.off("speech-end", handleSpeechEnd);
+    vapi.off("message", handleMessage);
 
     // Add new listeners
     vapi.on("call-start", handleCallStart);
     vapi.on("call-end", handleCallEnd);
     vapi.on("speech-start", handleSpeechStart);
     vapi.on("speech-end", handleSpeechEnd);
+    vapi.on("message", handleMessage);
 
     // Check if call is already active on mount
     setIsCallActiveState(isCallActive());
@@ -101,8 +147,22 @@ const VoiceAssistant = ({
       vapi.off("call-end", handleCallEnd);
       vapi.off("speech-start", handleSpeechStart);
       vapi.off("speech-end", handleSpeechEnd);
+      vapi.off("message", handleMessage);
     };
-  }, []);
+  }, [navigate]);
+
+  // Update assistant context when page changes (for smooth navigation)
+  useEffect(() => {
+    const vapi = getVapiInstance();
+    if (!vapi || !isCallActiveState || getCurrentAssistantType() !== "default") {
+      return;
+    }
+
+    // Page changed - log it (context is set on call start for smooth navigation)
+    if (assistantType === "default") {
+      console.log("Page changed to:", location.pathname);
+    }
+  }, [location.pathname, isCallActiveState, assistantType]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -135,20 +195,31 @@ const VoiceAssistant = ({
 
         if (!success) {
           console.error("Failed to start explain note call");
-          // Optionally show error to user
+        }
+      } else if (assistantType === "pdf" && pdfData) {
+        const success = await startPdfCall(
+          { firstName: user?.firstName || "User" },
+          pdfData.fileName,
+          pdfData.content || "No content available",
+          pdfData.pageCount,
+          pdfData.imageUrls || [],
+          pdfData.imageAnalysis || null
+        );
+
+        if (!success) {
+          console.error("Failed to start PDF call");
         }
       } else {
-        const success = await startVapiCall({
-          firstName: user?.firstName || "User",
-        });
+        const success = await startVapiCall(
+          { firstName: user?.firstName || "User" },
+          location.pathname
+        );
         if (!success) {
           console.error("Failed to start Vapi call");
-          // Optionally show error to user
         }
       }
     } catch (error) {
       console.error("Error starting call:", error);
-      // Optionally show error to user
     } finally {
       setIsConnecting(false);
     }
@@ -176,7 +247,9 @@ const VoiceAssistant = ({
   };
 
   const getAssistantName = () => {
-    return assistantType === "explain" ? "MUHORO" : "Notely";
+    if (assistantType === "explain") return "MUHORO";
+    if (assistantType === "pdf") return "PDF Assistant";
+    return "Notely";
   };
 
   if (!isCallActiveState && !isConnecting) {

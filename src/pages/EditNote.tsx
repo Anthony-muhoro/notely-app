@@ -14,6 +14,7 @@ import ApiClient from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ModernSwitch } from "@/components/ui/modern-switch";
 import { toast } from "sonner";
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
 
 interface FormData {
   title: string;
@@ -137,9 +138,31 @@ const EditNote = () => {
         synopsis: synopsis ? stripMarkdown(synopsis) : prev.synopsis,
         content: content ? stripMarkdown(content) : prev.content,
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI rewrite error:", error);
-      toast(<p>Failed to rewrite content</p>);
+      const errorData = error?.response?.data;
+      
+      // Handle quota exceeded errors
+      if (errorData?.error === "QUOTA_EXCEEDED" || error?.response?.status === 429) {
+        const retryAfter = errorData?.retryAfter || 60;
+        toast(
+          <div className="max-w-sm w-full">
+            <p className="font-semibold">AI Service Quota Exceeded</p>
+            <p className="text-sm text-gray-600">
+              You've reached the AI service limit. Please try again in {retryAfter} seconds or check your API plan.
+            </p>
+          </div>
+        );
+      } else {
+        toast(
+          <div className="max-w-sm w-full">
+            <p className="font-semibold">Rewrite failed</p>
+            <p className="text-sm text-gray-600">
+              {errorData?.message || "Failed to rewrite content with AI. Please try again."}
+            </p>
+          </div>
+        );
+      }
     } finally {
       setIsRewritingAI(false);
     }
@@ -326,6 +349,7 @@ const EditNote = () => {
           </div>
         </div>
       </div>
+      <VoiceAssistant assistantType="default" />
     </DashboardLayout>
   );
 };

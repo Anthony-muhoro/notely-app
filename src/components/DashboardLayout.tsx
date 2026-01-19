@@ -28,6 +28,7 @@ import {
   Globe,
   LockKeyhole,
   User2,
+  MessageSquare,
 } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -55,6 +56,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigation = [
     { name: "My Notes", href: "/dashboard", icon: FileText },
     { name: "New Entry", href: "/new", icon: Plus },
+    { name: "PDF Chat", href: "/pdf-chat", icon: MessageSquare },
     { name: "Pinned", href: "/pinned", icon: Pin },
     { name: "Bookmarked", href: "/bookmarks", icon: Bookmark },
     { name: "Trash", href: "/trash", icon: Trash2 },

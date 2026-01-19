@@ -15,6 +15,7 @@ import DashboardLayout from "@/components/DashboardLayout.tsx";
 import { useAuth } from "@/store/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import ApiClient from "@/lib/api";
+import VoiceAssistant from "@/components/voice/VoiceAssistant";
 
 const Profile = () => {
   const { user, refreshUser } = useAuth();
@@ -245,6 +246,7 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      <VoiceAssistant assistantType="default" />
     </DashboardLayout>
   );
 };
