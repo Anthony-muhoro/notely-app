@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(uuid()) @map("userid")
+  firstName         String   @map("firstname")
+  lastName          String   @map("lastname")
+  userName          String   @unique @map("username")
+  email             String   @unique @map("emailAddress")
+  password          String   @map("password")
+  avatar            String?  @map("profileImage")
+  notes             Note[]
+  pdfDocuments      PdfDocument[]
+  verificationToken String?  @map("otpCode")
+  isVerified        Boolean  @default(false)
+  isDeleted         Boolean  @default(false)
+  resetToken        String?  @map("resetToken")
+  resetTokenExpiry  DateTime? @map("resetTokenExpiry")
+  dateJoined        DateTime @default(now())
+  lastUpdated       DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Note {
+  id           String      @id @default(uuid())
+  title        String
+  synopsis     String
+  content      String
+  images       NoteImage[]
+  isDeleted    Boolean     @default(false)
+  creatorId    String
+  isPublic     Boolean     @default(false)
+  isBookmarked Boolean     @default(false)
+  isPinned     Boolean     @default(false)
+  user         User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  dateCreated  DateTime    @default(now())
+  lastUpdated  DateTime    @updatedAt
+
+  @@map("notes")
+}
+
+model NoteImage {
+  id       String @id @default(uuid())
+  noteId   String
+  imageUrl String @map("image_url")
+  imageId  String @map("image_id") 
+  alt      String?
+  order    Int    @default(0) 
+  note     Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@map("note_images")
+}
+
+model PdfDocument {
+  id            String       @id @default(uuid())
+  userId        String
+  fileName      String
+  fileUrl       String
+  fileSize      Int
+  pageCount     Int?
+  extractedText String?      @db.Text
+  imageUrls     String[]     @default([]) // Array of image URLs from PDF pages
+  imageAnalysis String?      @db.Text // Gemini 3.0 Flash analysis of images (stored once after upload)
+  imageAnalysisDate DateTime? // When the image analysis was completed
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatSessions  ChatSession[]
+  dateCreated   DateTime     @default(now())
+  lastUpdated   DateTime     @updatedAt
+
+  @@map("pdf_documents")
+}
+
+model ChatSession {
+  id          String       @id @default(uuid())
+  pdfId       String
+  pdf         PdfDocument  @relation(fields: [pdfId], references: [id], onDelete: Cascade)
+  messages    ChatMessage[]
+  dateCreated DateTime     @default(now())
+  lastUpdated DateTime     @updatedAt
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id          String       @id @default(uuid())
+  sessionId   String
+  session     ChatSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role        String       // "user" or "assistant"
+  content     String       @db.Text
+  dateCreated DateTime     @default(now())
+
+  @@map("chat_messages")
+}
