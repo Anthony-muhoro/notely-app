@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mic, Loader2, User, Bot } from "lucide-react";
+import { Send, Mic, Loader2, User, Bot, FileText, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import ApiClient from "@/lib/api";
 import ReactMarkdown from "react-markdown";
 
@@ -16,12 +17,16 @@ interface Message {
 
 interface ChatInterfaceProps {
   pdfId: string;
+  sessionId?: string;
   initialMessages?: Message[];
   onMessageAdded?: (message: Message) => void;
+  onFileUpload?: (file: File) => void;
+  key?: string; // Add key prop to force remount when session changes
 }
 
 const ChatInterface = ({
   pdfId,
+  sessionId,
   initialMessages = [],
   onMessageAdded,
 }: ChatInterfaceProps) => {
@@ -30,8 +35,16 @@ const ChatInterface = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  // Sync messages when initialMessages change (session switch)
+  useEffect(() => {
+    setMessages(initialMessages);
+  }, [initialMessages, sessionId]);
 
   // Initialize Web Speech API
   useEffect(() => {
@@ -76,8 +89,11 @@ const ChatInterface = ({
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // Use setTimeout to ensure DOM is updated
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }, [messages, sessionId]); // Also scroll when session changes
 
   const startRecording = () => {
     if (recognition) {
@@ -130,7 +146,10 @@ const ChatInterface = ({
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ message: userMessage.content }),
+          body: JSON.stringify({ 
+            message: userMessage.content,
+            sessionId: sessionId 
+          }),
         }
       );
 
@@ -360,6 +379,59 @@ const ChatInterface = ({
       {/* Input Area */}
       <div className="border-t border-gray-200 p-4 bg-gray-50">
         <div className="flex gap-2">
+          {/* File Upload Button */}
+          <label htmlFor="pdf-upload-input" className="sr-only">
+            Upload new PDF file
+          </label>
+          <input
+            id="pdf-upload-input"
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+
+              if (file.type !== "application/pdf") {
+                toast({
+                  title: "Invalid file type",
+                  description: "Please upload a PDF file",
+                  variant: "destructive",
+                });
+                return;
+              }
+
+              if (onFileUpload) {
+                setIsUploading(true);
+                try {
+                  await onFileUpload(file);
+                } finally {
+                  setIsUploading(false);
+                  // Reset input
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                  }
+                }
+              }
+            }}
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            size="icon"
+            disabled={isUploading}
+            title="Upload new PDF"
+            className="flex-shrink-0"
+            aria-label="Upload new PDF file"
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4" />
+            )}
+          </Button>
+          
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -371,7 +443,7 @@ const ChatInterface = ({
             }}
             placeholder="Ask a question about the PDF..."
             rows={3}
-            className="resize-none"
+            className="resize-none flex-1"
           />
           <div className="flex flex-col gap-2">
             <Button

@@ -31,6 +31,7 @@ interface VoiceAssistantProps {
     pageCount: number;
     imageUrls?: string[];
     imageAnalysis?: string | null;
+    geminiSummary?: string | null;
   };
 }
 
