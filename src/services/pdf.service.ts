@@ -70,6 +70,9 @@ export class PdfService {
         folder: "/pdfs",
         useUniqueFileName: true,
       });
+      
+      // Store fileId for later deletion (uploadResult.fileId)
+      const pdfFileId = uploadResult.fileId;
 
       // Extract images from PDF pages and analyze with Gemini 3.0 Flash
       let imageUrls: string[] = [];
@@ -110,7 +113,7 @@ export class PdfService {
         console.warn("[PDF UPLOAD] Continuing upload without image analysis");
       }
 
-      // Save PDF document to database with image URLs and analysis
+      // Save PDF document to database first (we need the ID for summary generation)
       const pdfDocument = await prisma.pdfDocument.create({
         data: {
           userId,
@@ -127,6 +130,42 @@ export class PdfService {
       
       console.log(`[PDF UPLOAD] PDF document saved with ID: ${pdfDocument.id}`);
 
+      // Generate comprehensive Gemini summary for VAPI
+      let geminiSummary: string | null = null;
+      try {
+        console.log("[PDF UPLOAD] Generating comprehensive Gemini summary for VAPI...");
+        const startTime = Date.now();
+        
+        geminiSummary = await PdfChatService.getPdfSummaryForVapi(
+          pdfDocument.id,
+          userId
+        );
+        
+        const duration = Date.now() - startTime;
+        console.log(`[PDF UPLOAD] Gemini summary generated in ${duration}ms`);
+        console.log(`[PDF UPLOAD] Summary preview (first 300 chars):`, geminiSummary.substring(0, 300));
+        
+        // Update PDF document with summary
+        await prisma.pdfDocument.update({
+          where: { id: pdfDocument.id },
+          data: {
+            geminiSummary: geminiSummary,
+            geminiSummaryDate: new Date(),
+          },
+        });
+        
+        console.log("[PDF UPLOAD] Gemini summary stored successfully");
+      } catch (error: any) {
+        console.error("[PDF UPLOAD] Error generating Gemini summary:", error);
+        // Continue without summary - don't fail the upload
+        console.warn("[PDF UPLOAD] Continuing upload without Gemini summary");
+      }
+
+      // Fetch the updated PDF document with summary
+      const updatedPdf = await prisma.pdfDocument.findUnique({
+        where: { id: pdfDocument.id },
+      });
+
       // Create initial chat session
       const chatSession = await prisma.chatSession.create({
         data: {
@@ -140,7 +179,7 @@ export class PdfService {
       });
 
       return {
-        pdf: pdfDocument,
+        pdf: updatedPdf || pdfDocument,
         session: chatSession,
       };
     } catch (error: any) {
@@ -193,7 +232,128 @@ export class PdfService {
   }
 
   /**
-   * Get or create chat session for PDF
+   * Get all chat sessions for a PDF (only sessions with messages)
+   */
+  static async getChatSessions(pdfId: string, userId: string) {
+    // Verify PDF belongs to user
+    const pdf = await prisma.pdfDocument.findFirst({
+      where: {
+        id: pdfId,
+        userId,
+      },
+    });
+
+    if (!pdf) {
+      throw new ApiError(404, "PDF document not found");
+    }
+
+    // Get all sessions with message counts
+    const sessions = await prisma.chatSession.findMany({
+      where: {
+        pdfId,
+      },
+      include: {
+        messages: {
+          orderBy: { dateCreated: "asc" },
+          take: 1, // Just get first message for preview
+        },
+        _count: {
+          select: { messages: true },
+        },
+      },
+      orderBy: {
+        lastUpdated: "desc",
+      },
+    });
+
+    // Filter out sessions with no messages
+    return sessions.filter((session) => session._count.messages > 0);
+  }
+
+  /**
+   * Get a specific chat session by ID
+   */
+  static async getChatSessionById(sessionId: string, userId: string) {
+    const session = await prisma.chatSession.findFirst({
+      where: {
+        id: sessionId,
+        pdf: {
+          userId,
+        },
+      },
+      include: {
+        messages: {
+          orderBy: { dateCreated: "asc" },
+        },
+        pdf: true,
+      },
+    });
+
+    if (!session) {
+      throw new ApiError(404, "Chat session not found");
+    }
+
+    return session;
+  }
+
+  /**
+   * Create a new chat session for PDF
+   */
+  static async createChatSession(pdfId: string, userId: string) {
+    // Verify PDF belongs to user
+    const pdf = await prisma.pdfDocument.findFirst({
+      where: {
+        id: pdfId,
+        userId,
+      },
+    });
+
+    if (!pdf) {
+      throw new ApiError(404, "PDF document not found");
+    }
+
+    return await prisma.chatSession.create({
+      data: {
+        pdfId,
+      },
+      include: {
+        messages: {
+          orderBy: { dateCreated: "asc" },
+        },
+      },
+    });
+  }
+
+  /**
+   * Delete a chat session
+   */
+  static async deleteChatSession(sessionId: string, userId: string) {
+    // Verify session belongs to user's PDF
+    const session = await prisma.chatSession.findFirst({
+      where: {
+        id: sessionId,
+        pdf: {
+          userId,
+        },
+      },
+    });
+
+    if (!session) {
+      throw new ApiError(404, "Chat session not found");
+    }
+
+    // Delete session (messages will cascade delete)
+    await prisma.chatSession.delete({
+      where: {
+        id: sessionId,
+      },
+    });
+
+    return { message: "Chat session deleted successfully" };
+  }
+
+  /**
+   * Get or create chat session for PDF (legacy method for backward compatibility)
    */
   static async getOrCreateChatSession(pdfId: string, userId: string) {
     // Verify PDF belongs to user
@@ -257,7 +417,7 @@ export class PdfService {
   }
 
   /**
-   * Delete PDF document
+   * Delete PDF document and associated ImageKit files
    */
   static async deletePdf(pdfId: string, userId: string) {
     const pdf = await prisma.pdfDocument.findFirst({
@@ -271,6 +431,76 @@ export class PdfService {
       throw new ApiError(404, "PDF document not found");
     }
 
+    // Delete ImageKit files
+    try {
+      // Delete main PDF file from ImageKit
+      const fileUrl = pdf.fileUrl;
+      if (fileUrl) {
+        try {
+          // Extract file path from URL
+          const urlObj = new URL(fileUrl);
+          const filePath = urlObj.pathname.substring(1); // Remove leading slash
+          
+          // List files in the /pdfs folder and find matching file
+          const files = await imagekit.listFiles({
+            path: "/pdfs",
+            limit: 100,
+          });
+          
+          // Find file by matching URL (filter out folders, only get FileObject)
+          const matchingFile = files.find((f: any) => {
+            // Check if it's a file (has fileId property) and matches URL or path
+            return 'fileId' in f && (f.url === fileUrl || f.filePath === filePath);
+          });
+          
+          if (matchingFile && 'fileId' in matchingFile) {
+            const fileId = (matchingFile as any).fileId;
+            await imagekit.deleteFile(fileId);
+            console.log(`[PDF DELETE] Deleted PDF file from ImageKit: ${fileId}`);
+          } else {
+            console.warn(`[PDF DELETE] Could not find PDF file in ImageKit for deletion: ${fileUrl}`);
+          }
+        } catch (error: any) {
+          console.error("[PDF DELETE] Error deleting PDF file from ImageKit:", error);
+          // Continue with deletion even if ImageKit deletion fails
+        }
+      }
+
+      // Delete page images from ImageKit
+      if (pdf.imageUrls && pdf.imageUrls.length > 0) {
+        for (const imageUrl of pdf.imageUrls) {
+          try {
+            const urlObj = new URL(imageUrl);
+            const filePath = urlObj.pathname.substring(1);
+            
+            // List files in the /pdf-pages folder
+            const files = await imagekit.listFiles({
+              path: "/pdf-pages",
+              limit: 100,
+            });
+            
+            // Find matching file (filter out folders)
+            const matchingFile = files.find((f: any) => {
+              return 'fileId' in f && (f.url === imageUrl || f.filePath === filePath);
+            });
+            
+            if (matchingFile && 'fileId' in matchingFile) {
+              const fileId = (matchingFile as any).fileId;
+              await imagekit.deleteFile(fileId);
+              console.log(`[PDF DELETE] Deleted image from ImageKit: ${fileId}`);
+            }
+          } catch (error: any) {
+            console.error(`[PDF DELETE] Error deleting image from ImageKit:`, error);
+            // Continue with other deletions
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error("[PDF DELETE] Error during ImageKit cleanup:", error);
+      // Continue with database deletion even if ImageKit cleanup fails
+    }
+
+    // Delete from database (cascade will delete chat sessions and messages)
     await prisma.pdfDocument.delete({
       where: {
         id: pdfId,

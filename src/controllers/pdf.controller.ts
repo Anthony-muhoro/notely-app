@@ -34,19 +34,20 @@ export class PdfController {
 
   /**
    * Get PDF by ID with chat session
-   * Returns PDF with pre-analyzed images (already processed by Gemini during upload)
+   * Returns PDF with pre-analyzed images and Gemini summary (already processed during upload)
    */
   static getPdf = asyncHandler(
     async (req: AuthenticatedRequest, res: Response) => {
       const { id } = req.params;
       const pdf = await PdfService.getPdfById(id, req.user!.id);
 
-      // PDF already has imageUrls and imageAnalysis from upload
+      // PDF already has imageUrls, imageAnalysis, and geminiSummary from upload
       // No need to re-extract or re-analyze - use stored data
       const pdfWithAnalysis = {
         ...pdf,
         imageUrls: pdf.imageUrls || [],
         imageAnalysis: pdf.imageAnalysis || null,
+        geminiSummary: pdf.geminiSummary || null,
       };
 
       res.status(200).json(new ApiResponse(200, pdfWithAnalysis, "PDF retrieved successfully"));
@@ -72,7 +73,7 @@ export class PdfController {
   static chatWithPdf = asyncHandler(
     async (req: AuthenticatedRequest, res: Response) => {
       const { id } = req.params;
-      const { message } = req.body;
+      const { message, sessionId } = req.body;
 
       if (!message || !message.trim()) {
         return res.status(400).json({
@@ -83,6 +84,7 @@ export class PdfController {
 
       console.log("=== PDF CHAT REQUEST ===");
       console.log("PDF ID:", id);
+      console.log("Session ID:", sessionId || "default");
       console.log("User ID:", req.user!.id);
       console.log("Message:", message);
 
@@ -100,6 +102,7 @@ export class PdfController {
           id,
           req.user!.id,
           message,
+          sessionId,
           (chunk) => {
             chunkSentCount++;
             fullResponse += chunk;
@@ -141,7 +144,71 @@ export class PdfController {
   );
 
   /**
-   * Get chat history
+   * Get all chat sessions for a PDF
+   */
+  static getChatSessions = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const { id } = req.params;
+      const sessions = await PdfService.getChatSessions(id, req.user!.id);
+
+      res
+        .status(200)
+        .json(new ApiResponse(200, sessions, "Chat sessions retrieved successfully"));
+    }
+  );
+
+  /**
+   * Get a specific chat session by ID
+   */
+  static getChatSession = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const { id, sessionId } = req.params;
+      const session = await PdfService.getChatSessionById(sessionId, req.user!.id);
+
+      // Verify session belongs to the PDF
+      if (session.pdfId !== id) {
+        return res.status(400).json({
+          success: false,
+          message: "Chat session does not belong to this PDF",
+        });
+      }
+
+      res
+        .status(200)
+        .json(new ApiResponse(200, session, "Chat session retrieved successfully"));
+    }
+  );
+
+  /**
+   * Create a new chat session
+   */
+  static createChatSession = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const { id } = req.params;
+      const session = await PdfService.createChatSession(id, req.user!.id);
+
+      res
+        .status(201)
+        .json(new ApiResponse(201, session, "Chat session created successfully"));
+    }
+  );
+
+  /**
+   * Delete a chat session
+   */
+  static deleteChatSession = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const { id, sessionId } = req.params;
+      const result = await PdfService.deleteChatSession(sessionId, req.user!.id);
+
+      res
+        .status(200)
+        .json(new ApiResponse(200, result, "Chat session deleted successfully"));
+    }
+  );
+
+  /**
+   * Get chat history (legacy - for backward compatibility)
    */
   static getChatHistory = asyncHandler(
     async (req: AuthenticatedRequest, res: Response) => {
@@ -151,6 +218,30 @@ export class PdfController {
       res
         .status(200)
         .json(new ApiResponse(200, history, "Chat history retrieved successfully"));
+    }
+  );
+
+  /**
+   * Get comprehensive PDF summary from Gemini for VAPI
+   * This provides a detailed analysis of the entire PDF document
+   */
+  static getPdfSummary = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const { id } = req.params;
+      
+      try {
+        const summary = await PdfChatService.getPdfSummaryForVapi(id, req.user!.id);
+        
+        res.status(200).json(
+          new ApiResponse(200, { summary }, "PDF summary generated successfully")
+        );
+      } catch (error: any) {
+        console.error("Error generating PDF summary:", error);
+        res.status(500).json({
+          success: false,
+          message: "Failed to generate PDF summary: " + error.message,
+        });
+      }
     }
   );
 

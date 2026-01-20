@@ -69,6 +69,8 @@ model PdfDocument {
   imageUrls     String[]     @default([]) // Array of image URLs from PDF pages
   imageAnalysis String?      @db.Text // Gemini 3.0 Flash analysis of images (stored once after upload)
   imageAnalysisDate DateTime? // When the image analysis was completed
+  geminiSummary String?      @db.Text // Comprehensive PDF summary from Gemini for VAPI
+  geminiSummaryDate DateTime? // When the summary was generated
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   chatSessions  ChatSession[]
   dateCreated   DateTime     @default(now())
